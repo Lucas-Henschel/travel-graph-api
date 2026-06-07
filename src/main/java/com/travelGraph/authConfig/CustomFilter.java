@@ -9,8 +9,8 @@ import com.travelGraph.dto.auth.CurrentUserDTO;
 import com.travelGraph.entities.UserEntity;
 import com.travelGraph.helpers.WriteErrorResponse;
 import com.travelGraph.services.UserService;
-
 import com.travelGraph.services.exceptions.ResourceNotFoundException;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +24,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 public class CustomFilter extends OncePerRequestFilter {
@@ -45,13 +46,17 @@ public class CustomFilter extends OncePerRequestFilter {
 
         if (tokenHeader != null) {
             try {
-                Long userId = tokenService.validateToken(tokenHeader);
-                UserEntity userEntity = userService.findById(userId);
+                String userId = tokenService.validateToken(tokenHeader);
+                Optional<UserEntity> userEntity = userService.findById(userId);
+
+                if (userEntity.isEmpty()) {
+                    throw new ResourceNotFoundException("Credenciais de acesso inválidas");
+                }
     
                 CurrentUserDTO currentUserEntityAuthentication = new CurrentUserDTO(
-                    userEntity.getId(),
-                    userEntity.getName(),
-                    userEntity.getEmail()
+                    userEntity.get().getId(),
+                    userEntity.get().getName(),
+                    userEntity.get().getEmail()
                 );
     
                 currentUserAuthentication.setCurrentUserEntity(currentUserEntityAuthentication);

@@ -33,7 +33,7 @@ public class TokenService {
         }
     }
 
-    public Long validateToken(String token) {
+    public String validateToken(String token) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
 
@@ -43,7 +43,7 @@ public class TokenService {
                 .verify(token)
                 .getSubject();
 
-            return Long.parseLong(userId);
+            return userId;
         } catch (TokenExpiredException | JWTCreationException exception) {
             throw new JWTCreationException("Sessão expirada", exception);
         } catch (JWTDecodeException exception) {

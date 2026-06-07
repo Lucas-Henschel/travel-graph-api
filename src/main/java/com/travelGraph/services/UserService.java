@@ -31,9 +31,9 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public UserEntity findById(Long id) {
+    public Optional<UserEntity> findById(String id) {
         Optional<UserEntity> user = userRepository.findById(id);
-        return user.orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+        return user;
     }
 
     public Optional<UserEntity> findByEmail(String email) {
@@ -41,7 +41,7 @@ public class UserService {
         return user;
     }
 
-    public void delete(CurrentUserDTO currentUser, Long id) {
+    public void delete(CurrentUserDTO currentUser, String id) {
         try {
             if (currentUser.getId().equals(id)) {
                 throw new DatabaseException("Usuário não pode deletar a si mesmo");
@@ -54,15 +54,19 @@ public class UserService {
         }
     }
 
-    public UserEntity update(Long id, UpdateUserRequestDTO updateUser) {
-        UserEntity entity = findById(id);
+    public UserEntity update(String id, UpdateUserRequestDTO updateUser) {
+        Optional<UserEntity> entity = findById(id);
+
+        if (entity.isEmpty()) {
+            throw new ResourceNotFoundException("Usuário não encontrado");
+        }
 
         String passwordEncryption = passwordEncoder.encode(updateUser.getPassword());
         updateUser.setPassword(passwordEncryption);
         
-        updateData(entity, updateUser);
+        updateData(entity.get(), updateUser);
 
-        return userRepository.save(entity);
+        return userRepository.save(entity.get());
     }
 
     private void updateData(UserEntity entity, UpdateUserRequestDTO updateUser) {

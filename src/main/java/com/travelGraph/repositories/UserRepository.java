@@ -8,6 +8,6 @@ import com.travelGraph.entities.UserEntity;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends Neo4jRepository<UserEntity, Long> {
+public interface UserRepository extends Neo4jRepository<UserEntity, String> {
     Optional<UserEntity> findByEmail(String email);
 }

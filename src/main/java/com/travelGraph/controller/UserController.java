@@ -3,7 +3,9 @@ package com.travelGraph.controller;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import com.travelGraph.services.exceptions.ResourceNotFoundException;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,15 +49,20 @@ public class UserController {
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<UserResponseDTO> findById(@Valid @PathVariable Long id) {
-        UserEntity userEntity = userService.findById(id);
-        UserResponseDTO userResponse = UserMapper.toDTO(userEntity);
+    public ResponseEntity<UserResponseDTO> findById(@Valid @PathVariable String id) {
+        Optional<UserEntity> userEntity = userService.findById(id);
+
+        if (userEntity.isEmpty()) {
+            throw new ResourceNotFoundException("Usuário não encontrado");
+        }
+
+        UserResponseDTO userResponse = UserMapper.toDTO(userEntity.get());
 
         return ResponseEntity.ok().body(userResponse);
     }
 
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity<Void> delete(@Valid @PathVariable Long id) {
+    public ResponseEntity<Void> delete(@Valid @PathVariable String id) {
         CurrentUserDTO currentUser = (CurrentUserDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         userService.delete(currentUser, id);
@@ -75,7 +82,7 @@ public class UserController {
     }
 
     @PutMapping(value = "/{id}")
-    public ResponseEntity<UserResponseDTO> update(@Valid @PathVariable Long id, @Valid @RequestBody UpdateUserRequestDTO updateUser) {
+    public ResponseEntity<UserResponseDTO> update(@Valid @PathVariable String id, @Valid @RequestBody UpdateUserRequestDTO updateUser) {
         UserEntity userEntity = userService.update(id, updateUser);
         UserResponseDTO userResponse = UserMapper.toDTO(userEntity);
 
