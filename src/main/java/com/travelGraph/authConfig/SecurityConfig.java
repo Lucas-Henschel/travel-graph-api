@@ -54,6 +54,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(customizer -> {
                 customizer.requestMatchers(HttpMethod.GET, "/").permitAll();
                 customizer.requestMatchers(HttpMethod.POST, "/auth/login").permitAll();
+                // Graph API endpoints
+                customizer.requestMatchers(HttpMethod.GET, "/graph/**").permitAll();
+                customizer.requestMatchers(HttpMethod.POST, "/graph/**").permitAll();
+                // Cities and Attractions
+                customizer.requestMatchers(HttpMethod.GET, "/cities/**").permitAll();
+                customizer.requestMatchers(HttpMethod.GET, "/attractions/**").permitAll();
                 customizer.anyRequest().authenticated();
             })
             .addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class)
