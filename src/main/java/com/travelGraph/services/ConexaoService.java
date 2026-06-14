@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
 @Service
 public class ConexaoService {
     @Autowired
@@ -42,27 +41,23 @@ public class ConexaoService {
     public ConexaoResponseDTO findById(Long id) {
         Optional<CityConnection> conexao = conexaoRepository.findById(id);
 
-        CityConnection conn = conexao.orElseThrow(() ->
-            new ResourceNotFoundException("Conexão não encontrada com ID: " + id));
+        CityConnection conn = conexao.orElseThrow(() -> new ResourceNotFoundException("Conexão não encontrada com ID: " + id));
 
         return mapToDTO(conn);
     }
 
     public ConexaoResponseDTO create(ConexaoRequestDTO createConexaoDTO) {
         CityNode cidadeOrigem = cityRepository.findById(createConexaoDTO.getCidadeOrigemId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "Cidade de origem não encontrada com ID: " + createConexaoDTO.getCidadeOrigemId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade de origem não encontrada com ID: " + createConexaoDTO.getCidadeOrigemId()));
 
         CityNode cidadeDestino = cityRepository.findById(createConexaoDTO.getCidadeDestinoId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "Cidade de destino não encontrada com ID: " + createConexaoDTO.getCidadeDestinoId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade de destino não encontrada com ID: " + createConexaoDTO.getCidadeDestinoId()));
 
         Optional<CityConnection> existingConnection = conexaoRepository.findByOrigemAndDestino(
             createConexaoDTO.getCidadeOrigemId(), createConexaoDTO.getCidadeDestinoId());
 
         if (existingConnection.isPresent()) {
-            throw new ResourceAlreadyExistsException(
-                "Já existe uma conexão entre essas cidades");
+            throw new ResourceAlreadyExistsException("Já existe uma conexão entre essas cidades");
         }
 
         try {
@@ -75,6 +70,7 @@ public class ConexaoService {
             if (cidadeOrigem.getConnections() == null) {
                 cidadeOrigem.setConnections(new ArrayList<>());
             }
+
             cidadeOrigem.getConnections().add(conexao);
 
             cityRepository.save(cidadeOrigem);

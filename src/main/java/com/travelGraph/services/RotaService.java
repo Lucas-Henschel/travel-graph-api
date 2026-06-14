@@ -10,6 +10,7 @@ import com.travelGraph.repositories.AttractionRepository;
 import com.travelGraph.repositories.CityRepository;
 import com.travelGraph.repositories.ConexaoRepository;
 import com.travelGraph.repositories.GraphQueryRepository;
+import com.travelGraph.services.exceptions.DatabaseException;
 import com.travelGraph.services.exceptions.InvalidRouteException;
 import com.travelGraph.services.exceptions.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 public class RotaService {
     @Autowired
@@ -47,12 +47,11 @@ public class RotaService {
      * @return RoteiroDTO com as cidades, distância total e tempo total
      */
     public RoteiroDTO calcularRota(Long startCityId, Long endCityId, String criteria) {
-        // Validar cidades
         CityNode origem = cityRepository.findById(startCityId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cidade de origem não encontrada: " + startCityId));
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade de origem não encontrada: " + startCityId));
 
         CityNode destino = cityRepository.findById(endCityId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cidade de destino não encontrada: " + endCityId));
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade de destino não encontrada: " + endCityId));
 
         if (!criteria.equals("distance") && !criteria.equals("time")) {
             throw new InvalidRouteException("Critério inválido. Use 'distance' ou 'time'");
@@ -61,23 +60,18 @@ public class RotaService {
         String propriedadePeso = criteria.equals("distance") ? "distancia" : "tempo";
 
         try {
-            // 1. Criar grafo em memória
             criarGrafo(propriedadePeso);
 
-            // 2. Executar algoritmo de caminho mais curto
             List<Long> caminhoIds = executarDijkstra(startCityId, endCityId, propriedadePeso);
 
             if (caminhoIds.isEmpty()) {
                 throw new InvalidRouteException("Nenhuma rota encontrada entre as cidades informadas");
             }
 
-            // 3. Construir resposta
             RoteiroDTO roteiro = construirRoteiro(caminhoIds, propriedadePeso);
 
             return roteiro;
-
         } finally {
-            // 4. Limpar grafo em memória
             deletarGrafo();
         }
     }
@@ -88,13 +82,11 @@ public class RotaService {
     private void criarGrafo(String propriedadePeso) {
         try {
             graphQueryRepository.createGraph(
-                    GRAPH_NAME,
-                    propriedadePeso
+                GRAPH_NAME,
+                propriedadePeso
             );
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Erro ao criar grafo em memória: " + e.getMessage()
-            );
+            throw new DatabaseException("Erro ao criar grafo em memória: " + e.getMessage());
         }
     }
 
@@ -102,27 +94,24 @@ public class RotaService {
      * Executa o algoritmo de Dijkstra
      */
     private List<Long> executarDijkstra(
-            Long origemId,
-            Long destinoId,
-            String propriedadePeso) {
-
+        Long origemId,
+        Long destinoId,
+        String propriedadePeso
+    ) {
         try {
-
-            Map<String, Object> data =
-                    graphQueryRepository.executeDijkstra(
-                            GRAPH_NAME,
-                            origemId,
-                            destinoId
-                    );
+            Map<String, Object> data = graphQueryRepository.executeDijkstra(
+                GRAPH_NAME,
+                origemId,
+                destinoId
+            );
 
             if (data == null) {
                 return new ArrayList<>();
             }
 
             return (List<Long>) data.get("nodeIds");
-
         } catch (Exception e) {
-            return new ArrayList<>();
+            throw new DatabaseException("Erro ao executar o dijistra: " + e.getMessage());
         }
     }
 
@@ -130,11 +119,10 @@ public class RotaService {
      * Deleta o grafo em memória
      */
     private void deletarGrafo() {
-
         try {
             graphQueryRepository.dropGraph(GRAPH_NAME);
         } catch (Exception e) {
-            log.warn("Erro ao deletar grafo (pode não existir)", e);
+            throw new DatabaseException("Erro ao deletar grafo (pode não existir): " + e.getMessage());
         }
     }
 
@@ -146,19 +134,16 @@ public class RotaService {
         Double distanciaTotal = 0.0;
         Double tempoTotal = 0.0;
 
-        // Processar cada cidade no caminho
         for (int i = 0; i < caminhoIds.size(); i++) {
             Long cidadeId = caminhoIds.get(i);
             CityNode city = cityRepository.findById(cidadeId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada: " + cidadeId));
+                .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada: " + cidadeId));
 
-            // Buscar pontos turísticos da cidade
             List<AttractionNode> attractions = attractionRepository.findByCityId(cidadeId);
             List<AttractionResponseDTO> attractionDTOs = attractions.stream()
-                    .map(AttractionMapper::toDTO)
-                    .collect(Collectors.toList());
+                .map(AttractionMapper::toDTO)
+                .collect(Collectors.toList());
 
-            // Criar DTO da cidade
             CidadeRotaDTO cidadeDto = new CidadeRotaDTO();
             cidadeDto.setId(city.getId());
             cidadeDto.setNome(city.getName());
@@ -168,7 +153,6 @@ public class RotaService {
 
             cidades.add(cidadeDto);
 
-            // Calcular distância e tempo até a próxima cidade
             if (i < caminhoIds.size() - 1) {
                 Double distancia = buscarDistanciaConexao(cidadeId, caminhoIds.get(i + 1));
                 Double tempo = buscarTempoConexao(cidadeId, caminhoIds.get(i + 1));
@@ -189,36 +173,26 @@ public class RotaService {
     /**
      * Busca a distância entre duas cidades conectadas
      */
-    private Double buscarDistanciaConexao(
-            Long origemId,
-            Long destinoId) {
-
+    private Double buscarDistanciaConexao(Long origemId, Long destinoId) {
         try {
             Double distancia = conexaoRepository.findDistanceByOrigemAndDestino(origemId, destinoId);
 
             return distancia != null ? distancia : 0.0;
-
         } catch (Exception e) {
-            log.warn("Erro ao buscar distância entre cidades", e);
-            return 0.0;
+            throw new DatabaseException("Erro ao buscar distância entre cidades: " + e.getMessage());
         }
     }
 
     /**
      * Busca o tempo entre duas cidades conectadas
      */
-    private Double buscarTempoConexao(
-            Long origemId,
-            Long destinoId) {
-
+    private Double buscarTempoConexao(Long origemId, Long destinoId) {
         try {
             Double tempo = conexaoRepository.findTimeByOrigemAndDestino(origemId, destinoId);
 
             return tempo != null ? tempo : 0.0;
-
         } catch (Exception e) {
-            log.warn("Erro ao buscar tempo entre cidades", e);
-            return 0.0;
+            throw new DatabaseException("Erro ao buscar tempo entre cidades: " + e.getMessage());
         }
     }
 }

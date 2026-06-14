@@ -7,4 +7,3 @@ public class InvalidRouteException extends RuntimeException {
         super(msg);
     }
 }
-
