@@ -30,41 +30,39 @@ public class AttractionController {
         for (AttractionNode attractionNode : attractionNodes) {
             response.add(AttractionMapper.toDTO(attractionNode));
         }
+
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<AttractionResponseDTO> findById(
-            @Valid @PathVariable Long id) {
+    public ResponseEntity<AttractionResponseDTO> findById(@Valid @PathVariable Long id) {
         AttractionNode attractionNode = attractionService.findById(id);
         AttractionResponseDTO response = AttractionMapper.toDTO(attractionNode);
+
         return ResponseEntity.ok().body(response);
     }
 
     @PostMapping
-    public ResponseEntity<AttractionResponseDTO> create(
-            @Valid @RequestBody CreateAttractionRequestDTO createAttractionDTO) {
+    public ResponseEntity<AttractionResponseDTO> create(@Valid @RequestBody CreateAttractionRequestDTO createAttractionDTO) {
         AttractionNode attractionNode = attractionService.create(createAttractionDTO);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                .buildAndExpand(attractionNode.getId()).toUri();
+            .buildAndExpand(attractionNode.getId()).toUri();
 
         AttractionResponseDTO response = AttractionMapper.toDTO(attractionNode);
         return ResponseEntity.created(uri).body(response);
     }
 
     @PutMapping(value = "/{id}")
-    public ResponseEntity<AttractionResponseDTO> update(
-            @Valid @PathVariable Long id,
-            @Valid @RequestBody UpdateAttractionRequestDTO updateAttractionDTO) {
+    public ResponseEntity<AttractionResponseDTO> update(@Valid @PathVariable Long id, @Valid @RequestBody UpdateAttractionRequestDTO updateAttractionDTO) {
         AttractionNode attractionNode = attractionService.update(id, updateAttractionDTO);
         AttractionResponseDTO response = AttractionMapper.toDTO(attractionNode);
+
         return ResponseEntity.ok().body(response);
     }
 
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity<Void> delete(
-            @Valid @PathVariable Long id) {
+    public ResponseEntity<Void> delete(@Valid @PathVariable Long id) {
         attractionService.delete(id);
         return ResponseEntity.noContent().build();
     }

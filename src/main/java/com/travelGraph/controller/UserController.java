@@ -37,7 +37,6 @@ public class UserController {
 
     /**
      * Lista todos os usuários
-     * GET /user
      */
     @GetMapping
     public ResponseEntity<List<UserResponseDTO>> findAll() {
@@ -54,11 +53,9 @@ public class UserController {
 
     /**
      * Busca um usuário por ID
-     * GET /user/{id}
      */
     @GetMapping(value = "/{id}")
-    public ResponseEntity<UserResponseDTO> findById(
-            @Valid @PathVariable String id) {
+    public ResponseEntity<UserResponseDTO> findById(@Valid @PathVariable String id) {
         Optional<UserEntity> userEntity = userService.findById(id);
 
         if (userEntity.isEmpty()) {
@@ -72,15 +69,13 @@ public class UserController {
 
     /**
      * Cria um novo usuário
-     * POST /user
      */
     @PostMapping
-    public ResponseEntity<UserResponseDTO> create(
-            @Valid @RequestBody CreateUserRequestDTO createUserRequestDTO) {
+    public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody CreateUserRequestDTO createUserRequestDTO) {
         UserEntity userEntity = userService.create(createUserRequestDTO);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                .buildAndExpand(userEntity.getId()).toUri();
+            .buildAndExpand(userEntity.getId()).toUri();
 
         UserResponseDTO userResponse = UserMapper.toDTO(userEntity);
 
@@ -89,12 +84,9 @@ public class UserController {
 
     /**
      * Atualiza um usuário existente
-     * PUT /user/{id}
      */
     @PutMapping(value = "/{id}")
-    public ResponseEntity<UserResponseDTO> update(
-            @Valid @PathVariable String id,
-            @Valid @RequestBody UpdateUserRequestDTO updateUser) {
+    public ResponseEntity<UserResponseDTO> update(@Valid @PathVariable String id, @Valid @RequestBody UpdateUserRequestDTO updateUser) {
         UserEntity userEntity = userService.update(id, updateUser);
         UserResponseDTO userResponse = UserMapper.toDTO(userEntity);
 
@@ -103,11 +95,9 @@ public class UserController {
 
     /**
      * Remove um usuário
-     * DELETE /user/{id}
      */
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity<Void> delete(
-            @Valid @PathVariable String id) {
+    public ResponseEntity<Void> delete(@Valid @PathVariable String id) {
         CurrentUserDTO currentUser = (CurrentUserDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         userService.delete(currentUser, id);

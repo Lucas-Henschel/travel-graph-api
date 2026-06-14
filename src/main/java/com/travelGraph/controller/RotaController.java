@@ -16,17 +16,10 @@ public class RotaController {
 
     /**
      * Calcula a rota entre duas cidades com critério especificado
-     * POST /routes
-     * Body: { startCityId, endCityId, criteria }
      */
     @PostMapping
-    public ResponseEntity<RoteiroDTO> calcularRota(
-            @Valid @RequestBody CalculateRouteRequestDTO request) {
-
+    public ResponseEntity<RoteiroDTO> calcularRota(@Valid @RequestBody CalculateRouteRequestDTO request) {
         RoteiroDTO roteiro = rotaService.calcularRota(request.getStartCityId(), request.getEndCityId(), request.getCriteria());
         return ResponseEntity.ok().body(roteiro);
     }
 }
-
-
-

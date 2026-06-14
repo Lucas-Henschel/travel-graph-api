@@ -30,11 +30,9 @@ public class AuthController {
 
     /**
      * Faz login do usuário e retorna token JWT
-     * POST /auth/login
      */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(
-            @RequestBody @Valid LoginRequestDTO data) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO data) {
         Authentication authentication = authService.validLogin(data.getEmail(), data.getPassword());
 
         if (authentication != null && authentication.isAuthenticated()) {
@@ -49,12 +47,9 @@ public class AuthController {
 
     /**
      * Faz logout do usuário
-     * POST /auth/logout
      */
     @PostMapping("/logout")
-    public ResponseEntity<Boolean> logout(
-            HttpServletRequest request,
-            HttpServletResponse response) {
+    public ResponseEntity<Boolean> logout(HttpServletRequest request, HttpServletResponse response) {
         Boolean isLoggedOut = authService.logout(request, response);
         return ResponseEntity.ok().body(isLoggedOut);
     }
