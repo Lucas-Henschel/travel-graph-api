@@ -17,4 +17,3 @@ public class CalculateRouteRequestDTO {
 
     private String criteria = "distance";
 }
-

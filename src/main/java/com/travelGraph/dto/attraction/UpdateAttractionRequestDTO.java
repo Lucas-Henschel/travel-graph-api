@@ -23,5 +23,3 @@ public class UpdateAttractionRequestDTO {
     private Double latitude;
     private Double longitude;
 }
-
-

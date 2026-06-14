@@ -16,4 +16,3 @@ public class NearbyLocationDTO {
     private Integer durationMinutes;
     private String transportType;
 }
-

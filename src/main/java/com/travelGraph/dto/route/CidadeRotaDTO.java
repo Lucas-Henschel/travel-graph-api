@@ -17,4 +17,3 @@ public class CidadeRotaDTO {
     private Double longitude;
     private List<AttractionResponseDTO> pontosTuristicos;
 }
-

@@ -17,5 +17,3 @@ public class CityResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-
-

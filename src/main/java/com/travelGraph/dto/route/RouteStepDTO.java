@@ -15,4 +15,3 @@ public class RouteStepDTO {
     private Double longitude;
     private Integer order;
 }
-

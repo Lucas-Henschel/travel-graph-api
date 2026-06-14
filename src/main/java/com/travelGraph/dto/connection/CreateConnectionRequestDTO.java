@@ -22,4 +22,3 @@ public class CreateConnectionRequestDTO {
     @NotNull(message = "O tipo de conexão é obrigatório (CITY ou ATTRACTION)")
     private String connectionType;
 }
-

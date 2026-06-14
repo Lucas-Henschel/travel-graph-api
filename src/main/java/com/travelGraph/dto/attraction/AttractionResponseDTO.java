@@ -21,5 +21,3 @@ public class AttractionResponseDTO {
     private LocalDateTime updatedAt;
     private CityResponseDTO city;
 }
-
-

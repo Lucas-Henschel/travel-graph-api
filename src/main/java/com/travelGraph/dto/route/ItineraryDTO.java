@@ -17,4 +17,3 @@ public class ItineraryDTO {
     private Integer totalDurationMinutes;
     private Double rating;
 }
-

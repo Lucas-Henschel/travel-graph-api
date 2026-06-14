@@ -19,4 +19,3 @@ public class ConexaoResponseDTO {
     private Double tempo;
     private LocalDateTime createdAt;
 }
-

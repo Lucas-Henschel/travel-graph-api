@@ -17,5 +17,3 @@ public class CreateCityRequestDTO {
     private Double latitude;
     private Double longitude;
 }
-
-

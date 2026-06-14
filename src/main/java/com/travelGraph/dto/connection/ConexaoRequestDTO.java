@@ -21,4 +21,3 @@ public class ConexaoRequestDTO {
     @NotNull(message = "O tempo é obrigatório")
     private Double tempo;
 }
-

@@ -14,4 +14,3 @@ public class RoteiroDTO {
     private Double distanciaTotal;
     private Double tempoTotal;
 }
-

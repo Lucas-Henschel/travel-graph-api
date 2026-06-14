@@ -27,5 +27,3 @@ public class CreateAttractionRequestDTO {
     @NotNull(message = "O ID da cidade é obrigatório")
     private Long cityId;
 }
-
-
