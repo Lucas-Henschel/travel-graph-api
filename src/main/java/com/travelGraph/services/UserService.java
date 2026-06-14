@@ -61,9 +61,13 @@ public class UserService {
             throw new ResourceNotFoundException("Usuário não encontrado");
         }
 
-        String passwordEncryption = passwordEncoder.encode(updateUser.getPassword());
-        updateUser.setPassword(passwordEncryption);
-        
+        if (updateUser.getPassword().isEmpty()) {
+            updateUser.setPassword(null);
+        } else {
+            String passwordEncryption = passwordEncoder.encode(updateUser.getPassword());
+            updateUser.setPassword(passwordEncryption);
+        }
+
         updateData(entity.get(), updateUser);
 
         return userRepository.save(entity.get());
