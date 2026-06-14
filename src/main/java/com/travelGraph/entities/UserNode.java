@@ -18,7 +18,7 @@ import org.springframework.data.neo4j.core.support.UUIDStringGenerator;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserEntity {
+public class UserNode {
     @Id
     @GeneratedValue(UUIDStringGenerator.class)
     private String id;

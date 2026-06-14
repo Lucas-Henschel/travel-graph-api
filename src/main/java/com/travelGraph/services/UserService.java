@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import com.travelGraph.dto.auth.CurrentUserDTO;
 import com.travelGraph.dto.user.CreateUserRequestDTO;
 import com.travelGraph.dto.user.UpdateUserRequestDTO;
-import com.travelGraph.entities.UserEntity;
+import com.travelGraph.entities.UserNode;
 import com.travelGraph.helpers.UpdateValueHelper;
 import com.travelGraph.repositories.UserRepository;
 import com.travelGraph.services.exceptions.DatabaseException;
@@ -27,17 +27,17 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public List<UserEntity> findAll() {
+    public List<UserNode> findAll() {
         return userRepository.findAll();
     }
 
-    public Optional<UserEntity> findById(String id) {
-        Optional<UserEntity> user = userRepository.findById(id);
+    public Optional<UserNode> findById(String id) {
+        Optional<UserNode> user = userRepository.findById(id);
         return user;
     }
 
-    public Optional<UserEntity> findByEmail(String email) {
-        Optional<UserEntity> user = userRepository.findByEmail(email);
+    public Optional<UserNode> findByEmail(String email) {
+        Optional<UserNode> user = userRepository.findByEmail(email);
         return user;
     }
 
@@ -54,8 +54,8 @@ public class UserService {
         }
     }
 
-    public UserEntity update(String id, UpdateUserRequestDTO updateUser) {
-        Optional<UserEntity> entity = findById(id);
+    public UserNode update(String id, UpdateUserRequestDTO updateUser) {
+        Optional<UserNode> entity = findById(id);
 
         if (entity.isEmpty()) {
             throw new ResourceNotFoundException("Usuário não encontrado");
@@ -73,14 +73,14 @@ public class UserService {
         return userRepository.save(entity.get());
     }
 
-    private void updateData(UserEntity entity, UpdateUserRequestDTO updateUser) {
+    private void updateData(UserNode entity, UpdateUserRequestDTO updateUser) {
         UpdateValueHelper.updateIfNotNull(entity::setName, updateUser.getName());
         UpdateValueHelper.updateIfNotNull(entity::setEmail, updateUser.getEmail());
         UpdateValueHelper.updateIfNotNull(entity::setPassword, updateUser.getPassword());
     }
 
-    public UserEntity create(@Valid CreateUserRequestDTO createUser) {
-        Optional<UserEntity> findUserByEmail = userRepository.findByEmail(createUser.getEmail());
+    public UserNode create(@Valid CreateUserRequestDTO createUser) {
+        Optional<UserNode> findUserByEmail = userRepository.findByEmail(createUser.getEmail());
 
         if (findUserByEmail.isPresent()) {
             throw new UnprocessableEntityException("Já existe um usuário com esse e-mail");
@@ -88,7 +88,7 @@ public class UserService {
         
         String passwordEncryption = passwordEncoder.encode(createUser.getPassword());
 
-        UserEntity user = new UserEntity();
+        UserNode user = new UserNode();
         user.setEmail(createUser.getEmail());
         user.setName(createUser.getName());
         user.setPassword(passwordEncryption);

@@ -28,4 +28,3 @@ public class AttractionConnection {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 }
-

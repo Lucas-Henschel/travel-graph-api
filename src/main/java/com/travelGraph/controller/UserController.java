@@ -25,7 +25,7 @@ import com.travelGraph.dto.auth.CurrentUserDTO;
 import com.travelGraph.dto.user.CreateUserRequestDTO;
 import com.travelGraph.dto.user.UpdateUserRequestDTO;
 import com.travelGraph.dto.user.UserResponseDTO;
-import com.travelGraph.entities.UserEntity;
+import com.travelGraph.entities.UserNode;
 import com.travelGraph.mapper.UserMapper;
 import com.travelGraph.services.UserService;
 
@@ -40,12 +40,12 @@ public class UserController {
      */
     @GetMapping
     public ResponseEntity<List<UserResponseDTO>> findAll() {
-        List<UserEntity> userEntities = userService.findAll();
+        List<UserNode> userEntities = userService.findAll();
 
         List<UserResponseDTO> listUserResponse = new ArrayList<>();
 
-        for (UserEntity userEntity : userEntities) {
-            listUserResponse.add(UserMapper.toDTO(userEntity));
+        for (UserNode userNode : userEntities) {
+            listUserResponse.add(UserMapper.toDTO(userNode));
         }
 
         return ResponseEntity.ok().body(listUserResponse);
@@ -56,7 +56,7 @@ public class UserController {
      */
     @GetMapping(value = "/{id}")
     public ResponseEntity<UserResponseDTO> findById(@Valid @PathVariable String id) {
-        Optional<UserEntity> userEntity = userService.findById(id);
+        Optional<UserNode> userEntity = userService.findById(id);
 
         if (userEntity.isEmpty()) {
             throw new ResourceNotFoundException("Usuário não encontrado");
@@ -72,12 +72,12 @@ public class UserController {
      */
     @PostMapping
     public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody CreateUserRequestDTO createUserRequestDTO) {
-        UserEntity userEntity = userService.create(createUserRequestDTO);
+        UserNode userNode = userService.create(createUserRequestDTO);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-            .buildAndExpand(userEntity.getId()).toUri();
+            .buildAndExpand(userNode.getId()).toUri();
 
-        UserResponseDTO userResponse = UserMapper.toDTO(userEntity);
+        UserResponseDTO userResponse = UserMapper.toDTO(userNode);
 
         return ResponseEntity.created(uri).body(userResponse);
     }
@@ -87,8 +87,8 @@ public class UserController {
      */
     @PutMapping(value = "/{id}")
     public ResponseEntity<UserResponseDTO> update(@Valid @PathVariable String id, @Valid @RequestBody UpdateUserRequestDTO updateUser) {
-        UserEntity userEntity = userService.update(id, updateUser);
-        UserResponseDTO userResponse = UserMapper.toDTO(userEntity);
+        UserNode userNode = userService.update(id, updateUser);
+        UserResponseDTO userResponse = UserMapper.toDTO(userNode);
 
         return ResponseEntity.ok().body(userResponse);
     }

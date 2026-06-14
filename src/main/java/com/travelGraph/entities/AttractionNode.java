@@ -40,5 +40,3 @@ public class AttractionNode {
     @Relationship(type = "PERTENCE_A", direction = Relationship.Direction.OUTGOING)
     private CityNode city;
 }
-
-

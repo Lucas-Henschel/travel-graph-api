@@ -1,11 +1,11 @@
 package com.travelGraph.mapper;
 
 import com.travelGraph.dto.user.UserResponseDTO;
-import com.travelGraph.entities.UserEntity;
+import com.travelGraph.entities.UserNode;
 import com.travelGraph.helpers.DateHelper;
 
 public class UserMapper {
-    public static UserResponseDTO toDTO(UserEntity entity) {
+    public static UserResponseDTO toDTO(UserNode entity) {
         if (entity == null) return null;
 
         UserResponseDTO dto = new UserResponseDTO();

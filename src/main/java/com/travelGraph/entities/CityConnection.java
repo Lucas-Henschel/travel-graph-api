@@ -27,5 +27,3 @@ public class CityConnection {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 }
-
-

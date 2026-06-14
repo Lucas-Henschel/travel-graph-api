@@ -36,6 +36,3 @@ public class CityNode {
     @Relationship(type = "CONECTA", direction = Relationship.Direction.OUTGOING)
     private List<CityConnection> connections = new ArrayList<>();
 }
-
-
-
