@@ -8,16 +8,16 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConexaoRequestDTO {
+public class ConnectionRequestDTO {
     @NotNull(message = "O ID da cidade de origem é obrigatório")
-    private Long cidadeOrigemId;
+    private Long originCityId;
 
     @NotNull(message = "O ID da cidade de destino é obrigatório")
-    private Long cidadeDestinoId;
+    private Long destinationCityId;
 
     @NotNull(message = "A distância é obrigatória")
-    private Double distancia;
+    private Double distance;
 
     @NotNull(message = "O tempo é obrigatório")
-    private Double tempo;
+    private Double time;
 }

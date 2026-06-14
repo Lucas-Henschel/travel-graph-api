@@ -10,10 +10,10 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CidadeRotaDTO {
+public class CityRouteDTO {
     private Long id;
-    private String nome;
+    private String name;
     private Double latitude;
     private Double longitude;
-    private List<AttractionResponseDTO> pontosTuristicos;
+    private List<AttractionResponseDTO> attractions;
 }

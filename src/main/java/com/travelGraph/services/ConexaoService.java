@@ -1,7 +1,7 @@
 package com.travelGraph.services;
 
-import com.travelGraph.dto.connection.ConexaoRequestDTO;
-import com.travelGraph.dto.connection.ConexaoResponseDTO;
+import com.travelGraph.dto.connection.ConnectionRequestDTO;
+import com.travelGraph.dto.connection.ConnectionResponseDTO;
 import com.travelGraph.entities.CityConnection;
 import com.travelGraph.entities.CityNode;
 import com.travelGraph.repositories.CityRepository;
@@ -27,9 +27,9 @@ public class ConexaoService {
     @Autowired
     private CityRepository cityRepository;
 
-    public List<ConexaoResponseDTO> findAll() {
+    public List<ConnectionResponseDTO> findAll() {
         List<CityConnection> connections = conexaoRepository.findAllWithCities();
-        List<ConexaoResponseDTO> response = new ArrayList<>();
+        List<ConnectionResponseDTO> response = new ArrayList<>();
 
         for (CityConnection conn : connections) {
             response.add(mapToDTO(conn));
@@ -38,46 +38,46 @@ public class ConexaoService {
         return response;
     }
 
-    public ConexaoResponseDTO findById(Long id) {
+    public ConnectionResponseDTO findById(Long id) {
         Optional<CityConnection> conexao = conexaoRepository.findById(id);
 
-        CityConnection conn = conexao.orElseThrow(() -> new ResourceNotFoundException("Conexão não encontrada com ID: " + id));
+        CityConnection conn = conexao.orElseThrow(() -> new ResourceNotFoundException("Connection not found with ID: " + id));
 
         return mapToDTO(conn);
     }
 
-    public ConexaoResponseDTO create(ConexaoRequestDTO createConexaoDTO) {
-        CityNode cidadeOrigem = cityRepository.findById(createConexaoDTO.getCidadeOrigemId())
-            .orElseThrow(() -> new ResourceNotFoundException("Cidade de origem não encontrada com ID: " + createConexaoDTO.getCidadeOrigemId()));
+    public ConnectionResponseDTO create(ConnectionRequestDTO createConnectionDTO) {
+        CityNode originCity = cityRepository.findById(createConnectionDTO.getOriginCityId())
+            .orElseThrow(() -> new ResourceNotFoundException("Origin city not found with ID: " + createConnectionDTO.getOriginCityId()));
 
-        CityNode cidadeDestino = cityRepository.findById(createConexaoDTO.getCidadeDestinoId())
-            .orElseThrow(() -> new ResourceNotFoundException("Cidade de destino não encontrada com ID: " + createConexaoDTO.getCidadeDestinoId()));
+        CityNode destinationCity = cityRepository.findById(createConnectionDTO.getDestinationCityId())
+            .orElseThrow(() -> new ResourceNotFoundException("Destination city not found with ID: " + createConnectionDTO.getDestinationCityId()));
 
         Optional<CityConnection> existingConnection = conexaoRepository.findByOrigemAndDestino(
-            createConexaoDTO.getCidadeOrigemId(), createConexaoDTO.getCidadeDestinoId());
+            createConnectionDTO.getOriginCityId(), createConnectionDTO.getDestinationCityId());
 
         if (existingConnection.isPresent()) {
-            throw new ResourceAlreadyExistsException("Já existe uma conexão entre essas cidades");
+            throw new ResourceAlreadyExistsException("A connection between these cities already exists");
         }
 
         try {
             CityConnection conexao = new CityConnection();
-            conexao.setTargetCity(cidadeDestino);
-            conexao.setDistancia(createConexaoDTO.getDistancia());
-            conexao.setTempo(createConexaoDTO.getTempo());
+            conexao.setTargetCity(destinationCity);
+            conexao.setDistancia(createConnectionDTO.getDistance());
+            conexao.setTempo(createConnectionDTO.getTime());
             conexao.setCreatedAt(LocalDateTime.now());
 
-            if (cidadeOrigem.getConnections() == null) {
-                cidadeOrigem.setConnections(new ArrayList<>());
+            if (originCity.getConnections() == null) {
+                originCity.setConnections(new ArrayList<>());
             }
 
-            cidadeOrigem.getConnections().add(conexao);
+            originCity.getConnections().add(conexao);
 
-            cityRepository.save(cidadeOrigem);
+            cityRepository.save(originCity);
 
             return mapToDTO(conexao);
         } catch (DataIntegrityViolationException e) {
-            throw new DatabaseException("Erro ao criar conexão: " + e.getMessage());
+            throw new DatabaseException("Error creating connection: " + e.getMessage());
         }
     }
 
@@ -86,12 +86,12 @@ public class ConexaoService {
             findById(id);
             conexaoRepository.deleteById(id);
         } catch (DataIntegrityViolationException e) {
-            throw new DatabaseException("Erro ao deletar conexão: " + e.getMessage());
+            throw new DatabaseException("Error deleting connection: " + e.getMessage());
         }
     }
 
-    private ConexaoResponseDTO mapToDTO(CityConnection connection) {
-        return new ConexaoResponseDTO(
+    private ConnectionResponseDTO mapToDTO(CityConnection connection) {
+        return new ConnectionResponseDTO(
             connection.getId(),
             connection.getTargetCity() != null ? connection.getTargetCity().getId() : null,
             connection.getTargetCity() != null ? connection.getTargetCity().getId() : null,

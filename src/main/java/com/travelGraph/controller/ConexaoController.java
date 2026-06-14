@@ -1,7 +1,7 @@
 package com.travelGraph.controller;
 
-import com.travelGraph.dto.connection.ConexaoRequestDTO;
-import com.travelGraph.dto.connection.ConexaoResponseDTO;
+import com.travelGraph.dto.connection.ConnectionRequestDTO;
+import com.travelGraph.dto.connection.ConnectionResponseDTO;
 import com.travelGraph.services.ConexaoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +22,8 @@ public class ConexaoController {
      * Lista todas as conexões
      */
     @GetMapping
-    public ResponseEntity<List<ConexaoResponseDTO>> findAll() {
-        List<ConexaoResponseDTO> response = conexaoService.findAll();
+    public ResponseEntity<List<ConnectionResponseDTO>> findAll() {
+        List<ConnectionResponseDTO> response = conexaoService.findAll();
         return ResponseEntity.ok().body(response);
     }
 
@@ -31,8 +31,8 @@ public class ConexaoController {
      * Busca uma conexão por ID
      */
     @GetMapping(value = "/{id}")
-    public ResponseEntity<ConexaoResponseDTO> findById(@Valid @PathVariable Long id) {
-        ConexaoResponseDTO response = conexaoService.findById(id);
+    public ResponseEntity<ConnectionResponseDTO> findById(@Valid @PathVariable Long id) {
+        ConnectionResponseDTO response = conexaoService.findById(id);
         return ResponseEntity.ok().body(response);
     }
 
@@ -40,13 +40,13 @@ public class ConexaoController {
      * Cria uma nova conexão entre cidades
      */
     @PostMapping
-    public ResponseEntity<ConexaoResponseDTO> create(@Valid @RequestBody ConexaoRequestDTO createConexaoDTO) {
-        ConexaoResponseDTO conexao = conexaoService.create(createConexaoDTO);
+    public ResponseEntity<ConnectionResponseDTO> create(@Valid @RequestBody ConnectionRequestDTO createConnectionDTO) {
+        ConnectionResponseDTO connection = conexaoService.create(createConnectionDTO);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-            .buildAndExpand(conexao.getId()).toUri();
+            .buildAndExpand(connection.getId()).toUri();
 
-        return ResponseEntity.created(uri).body(conexao);
+        return ResponseEntity.created(uri).body(connection);
     }
 
     /**

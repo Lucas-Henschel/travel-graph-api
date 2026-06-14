@@ -9,8 +9,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RoteiroDTO {
-    private List<CidadeRotaDTO> cidades;
-    private Double distanciaTotal;
-    private Double tempoTotal;
+public class TravelRouteDTO {
+    private List<CityRouteDTO> cities;
+    private Double totalDistance;
+    private Double totalTime;
 }

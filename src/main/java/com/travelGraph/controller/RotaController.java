@@ -1,7 +1,7 @@
 package com.travelGraph.controller;
 
 import com.travelGraph.dto.route.CalculateRouteRequestDTO;
-import com.travelGraph.dto.route.RoteiroDTO;
+import com.travelGraph.dto.route.TravelRouteDTO;
 import com.travelGraph.services.RotaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +18,8 @@ public class RotaController {
      * Calcula a rota entre duas cidades com critério especificado
      */
     @PostMapping
-    public ResponseEntity<RoteiroDTO> calcularRota(@Valid @RequestBody CalculateRouteRequestDTO request) {
-        RoteiroDTO roteiro = rotaService.calcularRota(request.getStartCityId(), request.getEndCityId(), request.getCriteria());
-        return ResponseEntity.ok().body(roteiro);
+    public ResponseEntity<TravelRouteDTO> calcularRota(@Valid @RequestBody CalculateRouteRequestDTO request) {
+        TravelRouteDTO travelRoute = rotaService.calcularRota(request.getStartCityId(), request.getEndCityId(), request.getCriteria());
+        return ResponseEntity.ok().body(travelRoute);
     }
 }

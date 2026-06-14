@@ -9,13 +9,13 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConexaoResponseDTO {
+public class ConnectionResponseDTO {
     private Long id;
-    private Long cidadeOrigemId;
-    private Long cidadeDestinoId;
-    private String cidadeOrigemNome;
-    private String cidadeDestinoNome;
-    private Double distancia;
-    private Double tempo;
+    private Long originCityId;
+    private Long destinationCityId;
+    private String originCityName;
+    private String destinationCityName;
+    private Double distance;
+    private Double time;
     private LocalDateTime createdAt;
 }

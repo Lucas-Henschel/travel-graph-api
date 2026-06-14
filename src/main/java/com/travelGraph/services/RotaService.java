@@ -1,8 +1,8 @@
 package com.travelGraph.services;
 
 import com.travelGraph.dto.attraction.AttractionResponseDTO;
-import com.travelGraph.dto.route.CidadeRotaDTO;
-import com.travelGraph.dto.route.RoteiroDTO;
+import com.travelGraph.dto.route.CityRouteDTO;
+import com.travelGraph.dto.route.TravelRouteDTO;
 import com.travelGraph.entities.AttractionNode;
 import com.travelGraph.entities.CityNode;
 import com.travelGraph.mapper.AttractionMapper;
@@ -44,17 +44,17 @@ public class RotaService {
      * @param startCityId ID da cidade de origem
      * @param endCityId   ID da cidade de destino
      * @param criteria    "distance" ou "time" como peso
-     * @return RoteiroDTO com as cidades, distância total e tempo total
+     * @return TravelRouteDTO with cities, total distance and total time
      */
-    public RoteiroDTO calcularRota(Long startCityId, Long endCityId, String criteria) {
+    public TravelRouteDTO calcularRota(Long startCityId, Long endCityId, String criteria) {
         CityNode origem = cityRepository.findById(startCityId)
-            .orElseThrow(() -> new ResourceNotFoundException("Cidade de origem não encontrada: " + startCityId));
+            .orElseThrow(() -> new ResourceNotFoundException("Origin city not found: " + startCityId));
 
         CityNode destino = cityRepository.findById(endCityId)
-            .orElseThrow(() -> new ResourceNotFoundException("Cidade de destino não encontrada: " + endCityId));
+            .orElseThrow(() -> new ResourceNotFoundException("Destination city not found: " + endCityId));
 
         if (!criteria.equals("distance") && !criteria.equals("time")) {
-            throw new InvalidRouteException("Critério inválido. Use 'distance' ou 'time'");
+            throw new InvalidRouteException("Invalid criteria. Use 'distance' or 'time'");
         }
 
         String propriedadePeso = criteria.equals("distance") ? "distancia" : "tempo";
@@ -65,10 +65,10 @@ public class RotaService {
             List<Long> caminhoIds = executarDijkstra(startCityId, endCityId, propriedadePeso);
 
             if (caminhoIds.isEmpty()) {
-                throw new InvalidRouteException("Nenhuma rota encontrada entre as cidades informadas");
+                throw new InvalidRouteException("No route found between the given cities");
             }
 
-            RoteiroDTO roteiro = construirRoteiro(caminhoIds, propriedadePeso);
+            TravelRouteDTO roteiro = construirRoteiro(caminhoIds, propriedadePeso);
 
             return roteiro;
         } finally {
@@ -127,47 +127,47 @@ public class RotaService {
     }
 
     /**
-     * Constrói o DTO RoteiroDTO com todas as informações
+     * Constrói o DTO TravelRouteDTO com todas as informações
      */
-    private RoteiroDTO construirRoteiro(List<Long> caminhoIds, String propriedadePeso) {
-        List<CidadeRotaDTO> cidades = new ArrayList<>();
-        Double distanciaTotal = 0.0;
-        Double tempoTotal = 0.0;
+    private TravelRouteDTO construirRoteiro(List<Long> caminhoIds, String propriedadePeso) {
+        List<CityRouteDTO> cities = new ArrayList<>();
+        Double totalDistance = 0.0;
+        Double totalTime = 0.0;
 
         for (int i = 0; i < caminhoIds.size(); i++) {
-            Long cidadeId = caminhoIds.get(i);
-            CityNode city = cityRepository.findById(cidadeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada: " + cidadeId));
+            Long cityId = caminhoIds.get(i);
+            CityNode city = cityRepository.findById(cityId)
+                .orElseThrow(() -> new ResourceNotFoundException("City not found: " + cityId));
 
-            List<AttractionNode> attractions = attractionRepository.findByCityId(cidadeId);
+            List<AttractionNode> attractions = attractionRepository.findByCityId(cityId);
             List<AttractionResponseDTO> attractionDTOs = attractions.stream()
                 .map(AttractionMapper::toDTO)
                 .collect(Collectors.toList());
 
-            CidadeRotaDTO cidadeDto = new CidadeRotaDTO();
-            cidadeDto.setId(city.getId());
-            cidadeDto.setNome(city.getName());
-            cidadeDto.setLatitude(city.getLatitude());
-            cidadeDto.setLongitude(city.getLongitude());
-            cidadeDto.setPontosTuristicos(attractionDTOs);
+            CityRouteDTO cityRouteDto = new CityRouteDTO();
+            cityRouteDto.setId(city.getId());
+            cityRouteDto.setName(city.getName());
+            cityRouteDto.setLatitude(city.getLatitude());
+            cityRouteDto.setLongitude(city.getLongitude());
+            cityRouteDto.setAttractions(attractionDTOs);
 
-            cidades.add(cidadeDto);
+            cities.add(cityRouteDto);
 
             if (i < caminhoIds.size() - 1) {
-                Double distancia = buscarDistanciaConexao(cidadeId, caminhoIds.get(i + 1));
-                Double tempo = buscarTempoConexao(cidadeId, caminhoIds.get(i + 1));
+                Double distance = buscarDistanciaConexao(cityId, caminhoIds.get(i + 1));
+                Double time = buscarTempoConexao(cityId, caminhoIds.get(i + 1));
 
-                if (distancia != null) distanciaTotal += distancia;
-                if (tempo != null) tempoTotal += tempo;
+                if (distance != null) totalDistance += distance;
+                if (time != null) totalTime += time;
             }
         }
 
-        RoteiroDTO roteiro = new RoteiroDTO();
-        roteiro.setCidades(cidades);
-        roteiro.setDistanciaTotal(distanciaTotal);
-        roteiro.setTempoTotal(tempoTotal);
+        TravelRouteDTO travelRoute = new TravelRouteDTO();
+        travelRoute.setCities(cities);
+        travelRoute.setTotalDistance(totalDistance);
+        travelRoute.setTotalTime(totalTime);
 
-        return roteiro;
+        return travelRoute;
     }
 
     /**
