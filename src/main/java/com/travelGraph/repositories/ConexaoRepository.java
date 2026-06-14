@@ -16,5 +16,10 @@ public interface ConexaoRepository extends Neo4jRepository<CityConnection, Long>
 
     @Query("MATCH (origem:Cidade {id: $origemId})-[conn:CONECTA]->(destino:Cidade {id: $destinoId}) RETURN conn, origem, destino")
     Optional<CityConnection> findByOrigemAndDestino(@Param("origemId") Long origemId, @Param("destinoId") Long destinoId);
-}
 
+    @Query("MATCH (origem:Cidade {id: $origemId})-[conn:CONECTA]->(destino:Cidade {id: $destinoId}) RETURN conn.distancia")
+    Double findDistanceByOrigemAndDestino(@Param("origemId") Long origemId, @Param("destinoId") Long destinoId);
+
+    @Query("MATCH (origem:Cidade {id: $origemId})-[conn:CONECTA]->(destino:Cidade {id: $destinoId}) RETURN conn.tempo")
+    Double findTimeByOrigemAndDestino(@Param("origemId") Long origemId, @Param("destinoId") Long destinoId);
+}

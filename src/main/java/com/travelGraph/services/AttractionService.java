@@ -27,24 +27,19 @@ public class AttractionService {
     private CityRepository cityRepository;
 
     public List<AttractionNode> findAll() {
-        log.info("Finding all attractions");
         return attractionRepository.findAll();
     }
 
     public AttractionNode findById(Long id) {
-        log.info("Finding attraction by id: {}", id);
         Optional<AttractionNode> attraction = attractionRepository.findById(id);
         return attraction.orElseThrow(() -> new ResourceNotFoundException("Ponto turístico não encontrado com ID: " + id));
     }
 
     public List<AttractionNode> findByCityId(Long cityId) {
-        log.info("Finding attractions by city id: {}", cityId);
         return attractionRepository.findByCityId(cityId);
     }
 
     public AttractionNode create(CreateAttractionRequestDTO createAttractionDTO) {
-        log.info("Creating new attraction: {}", createAttractionDTO.getName());
-
         CityNode city = cityRepository.findById(createAttractionDTO.getCityId())
             .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada com ID: " + createAttractionDTO.getCityId()));
 
@@ -59,16 +54,13 @@ public class AttractionService {
             attractionNode.setCreatedAt(LocalDateTime.now());
 
             AttractionNode savedAttraction = attractionRepository.save(attractionNode);
-            log.info("Attraction created successfully with id: {}", savedAttraction.getId());
             return savedAttraction;
         } catch (DataIntegrityViolationException e) {
-            log.error("Error creating attraction", e);
             throw new DatabaseException("Erro ao criar ponto turístico: " + e.getMessage());
         }
     }
 
     public AttractionNode update(Long id, UpdateAttractionRequestDTO updateAttractionDTO) {
-        log.info("Updating attraction with id: {}", id);
         AttractionNode attractionNode = findById(id);
 
         try {
@@ -80,22 +72,17 @@ public class AttractionService {
             attractionNode.setUpdatedAt(LocalDateTime.now());
 
             AttractionNode updatedAttraction = attractionRepository.save(attractionNode);
-            log.info("Attraction updated successfully with id: {}", id);
             return updatedAttraction;
         } catch (DataIntegrityViolationException e) {
-            log.error("Error updating attraction", e);
             throw new DatabaseException("Erro ao atualizar ponto turístico: " + e.getMessage());
         }
     }
 
     public void delete(Long id) {
-        log.info("Deleting attraction with id: {}", id);
         try {
             findById(id);
             attractionRepository.deleteById(id);
-            log.info("Attraction deleted successfully with id: {}", id);
         } catch (DataIntegrityViolationException e) {
-            log.error("Error deleting attraction", e);
             throw new DatabaseException("Erro ao deletar ponto turístico: " + e.getMessage());
         }
     }

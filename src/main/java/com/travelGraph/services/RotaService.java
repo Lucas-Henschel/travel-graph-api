@@ -6,17 +6,19 @@ import com.travelGraph.dto.route.RoteiroDTO;
 import com.travelGraph.entities.AttractionNode;
 import com.travelGraph.entities.CityNode;
 import com.travelGraph.mapper.AttractionMapper;
-import com.travelGraph.mapper.CityMapper;
-import com.travelGraph.repositories.CityRepository;
 import com.travelGraph.repositories.AttractionRepository;
-import com.travelGraph.services.exceptions.ResourceNotFoundException;
+import com.travelGraph.repositories.CityRepository;
+import com.travelGraph.repositories.ConexaoRepository;
+import com.travelGraph.repositories.GraphQueryRepository;
 import com.travelGraph.services.exceptions.InvalidRouteException;
+import com.travelGraph.services.exceptions.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,39 +31,41 @@ public class RotaService {
     private AttractionRepository attractionRepository;
 
     @Autowired
-    private Neo4jClient neo4jClient;
+    private GraphQueryRepository graphQueryRepository;
+
+    @Autowired
+    private ConexaoRepository conexaoRepository;
 
     private static final String GRAPH_NAME = "travel_graph";
 
     /**
      * Calcula a rota mais curta entre duas cidades usando Neo4j GDS
-     * @param origemId ID da cidade de origem
-     * @param destinoId ID da cidade de destino
-     * @param criterio "distancia" ou "tempo" como peso
+     *
+     * @param startCityId ID da cidade de origem
+     * @param endCityId   ID da cidade de destino
+     * @param criteria    "distance" ou "time" como peso
      * @return RoteiroDTO com as cidades, distância total e tempo total
      */
-    public RoteiroDTO calcularRota(Long origemId, Long destinoId, String criterio) {
-        log.info("Calculando rota de {} para {} com critério: {}", origemId, destinoId, criterio);
-
+    public RoteiroDTO calcularRota(Long startCityId, Long endCityId, String criteria) {
         // Validar cidades
-        CityNode origem = cityRepository.findById(origemId)
-            .orElseThrow(() -> new ResourceNotFoundException("Cidade de origem não encontrada: " + origemId));
-        
-        CityNode destino = cityRepository.findById(destinoId)
-            .orElseThrow(() -> new ResourceNotFoundException("Cidade de destino não encontrada: " + destinoId));
+        CityNode origem = cityRepository.findById(startCityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cidade de origem não encontrada: " + startCityId));
 
-        if (!criterio.equals("distancia") && !criterio.equals("tempo")) {
-            throw new InvalidRouteException("Critério inválido. Use 'distancia' ou 'tempo'");
+        CityNode destino = cityRepository.findById(endCityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cidade de destino não encontrada: " + endCityId));
+
+        if (!criteria.equals("distance") && !criteria.equals("time")) {
+            throw new InvalidRouteException("Critério inválido. Use 'distance' ou 'time'");
         }
 
-        String propriedadePeso = criterio.equals("distancia") ? "distancia" : "tempo";
+        String propriedadePeso = criteria.equals("distance") ? "distancia" : "tempo";
 
         try {
             // 1. Criar grafo em memória
             criarGrafo(propriedadePeso);
 
             // 2. Executar algoritmo de caminho mais curto
-            List<Long> caminhoIds = executarDijkstra(origemId, destinoId, propriedadePeso);
+            List<Long> caminhoIds = executarDijkstra(startCityId, endCityId, propriedadePeso);
 
             if (caminhoIds.isEmpty()) {
                 throw new InvalidRouteException("Nenhuma rota encontrada entre as cidades informadas");
@@ -70,7 +74,6 @@ public class RotaService {
             // 3. Construir resposta
             RoteiroDTO roteiro = construirRoteiro(caminhoIds, propriedadePeso);
 
-            log.info("Rota calculada com sucesso: {} cidades", roteiro.getCidades().size());
             return roteiro;
 
         } finally {
@@ -83,64 +86,42 @@ public class RotaService {
      * Cria um grafo em memória com GDS
      */
     private void criarGrafo(String propriedadePeso) {
-        log.info("Criando grafo em memória para critério: {}", propriedadePeso);
-
-        String cypher = "CALL gds.graph.project(\n" +
-            "    $graphName,\n" +
-            "    'Cidade',\n" +
-            "    'CONECTA',\n" +
-            "    { relationshipProperties: { weight: { property: $weight, defaultValue: 1.0 } } }\n" +
-            ")\n" +
-            "YIELD graphName, nodeCount, relationshipCount\n" +
-            "RETURN graphName, nodeCount, relationshipCount";
-
         try {
-            neo4jClient.query(cypher)
-                .bind(GRAPH_NAME).to("graphName")
-                .bind(propriedadePeso).to("weight")
-                .fetch()
-                .one();
-            
-            log.info("Grafo criado com sucesso");
+            graphQueryRepository.createGraph(
+                    GRAPH_NAME,
+                    propriedadePeso
+            );
         } catch (Exception e) {
-            log.error("Erro ao criar grafo", e);
-            throw new RuntimeException("Erro ao criar grafo em memória: " + e.getMessage());
+            throw new RuntimeException(
+                    "Erro ao criar grafo em memória: " + e.getMessage()
+            );
         }
     }
 
     /**
      * Executa o algoritmo de Dijkstra
      */
-    private List<Long> executarDijkstra(Long origemId, Long destinoId, String propriedadePeso) {
-        log.info("Executando Dijkstra de {} para {}", origemId, destinoId);
-
-        String cypher = "CALL gds.shortestPath.dijkstra.stream(\n" +
-            "    $graphName,\n" +
-            "    { sourceNode: $origem, targetNode: $destino, relationshipWeightProperty: 'weight' }\n" +
-            ")\n" +
-            "YIELD nodeIds, costs\n" +
-            "RETURN nodeIds, costs";
+    private List<Long> executarDijkstra(
+            Long origemId,
+            Long destinoId,
+            String propriedadePeso) {
 
         try {
-            var result = neo4jClient.query(cypher)
-                .bind(GRAPH_NAME).to("graphName")
-                .bind(origemId).to("origem")
-                .bind(destinoId).to("destino")
-                .fetch()
-                .one();
 
-            if (result.isEmpty()) {
+            Map<String, Object> data =
+                    graphQueryRepository.executeDijkstra(
+                            GRAPH_NAME,
+                            origemId,
+                            destinoId
+                    );
+
+            if (data == null) {
                 return new ArrayList<>();
             }
 
-            Map<String, Object> data = result.get();
-            List<Long> nodeIds = (List<Long>) data.get("nodeIds");
-            
-            log.info("Caminho encontrado com {} cidades", nodeIds.size());
-            return nodeIds;
+            return (List<Long>) data.get("nodeIds");
 
         } catch (Exception e) {
-            log.warn("Erro ao executar Dijkstra ou nenhuma rota encontrada", e);
             return new ArrayList<>();
         }
     }
@@ -149,18 +130,9 @@ public class RotaService {
      * Deleta o grafo em memória
      */
     private void deletarGrafo() {
-        log.info("Deletando grafo em memória");
-
-        String cypher = "CALL gds.graph.drop($graphName) YIELD graphName\n" +
-            "RETURN graphName";
 
         try {
-            neo4jClient.query(cypher)
-                .bind(GRAPH_NAME).to("graphName")
-                .fetch()
-                .one();
-            
-            log.info("Grafo deletado com sucesso");
+            graphQueryRepository.dropGraph(GRAPH_NAME);
         } catch (Exception e) {
             log.warn("Erro ao deletar grafo (pode não existir)", e);
         }
@@ -170,8 +142,6 @@ public class RotaService {
      * Constrói o DTO RoteiroDTO com todas as informações
      */
     private RoteiroDTO construirRoteiro(List<Long> caminhoIds, String propriedadePeso) {
-        log.info("Construindo roteiro com {} cidades", caminhoIds.size());
-
         List<CidadeRotaDTO> cidades = new ArrayList<>();
         Double distanciaTotal = 0.0;
         Double tempoTotal = 0.0;
@@ -180,13 +150,13 @@ public class RotaService {
         for (int i = 0; i < caminhoIds.size(); i++) {
             Long cidadeId = caminhoIds.get(i);
             CityNode city = cityRepository.findById(cidadeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada: " + cidadeId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada: " + cidadeId));
 
             // Buscar pontos turísticos da cidade
             List<AttractionNode> attractions = attractionRepository.findByCityId(cidadeId);
             List<AttractionResponseDTO> attractionDTOs = attractions.stream()
-                .map(AttractionMapper::toDTO)
-                .collect(Collectors.toList());
+                    .map(AttractionMapper::toDTO)
+                    .collect(Collectors.toList());
 
             // Criar DTO da cidade
             CidadeRotaDTO cidadeDto = new CidadeRotaDTO();
@@ -219,48 +189,36 @@ public class RotaService {
     /**
      * Busca a distância entre duas cidades conectadas
      */
-    private Double buscarDistanciaConexao(Long origemId, Long destinoId) {
-        String cypher = "MATCH (origem:Cidade {id: $origemId})-[conn:CONECTA]->(destino:Cidade {id: $destinoId}) " +
-            "RETURN conn.distancia as distancia";
+    private Double buscarDistanciaConexao(
+            Long origemId,
+            Long destinoId) {
 
         try {
-            var result = neo4jClient.query(cypher)
-                .bind(origemId).to("origemId")
-                .bind(destinoId).to("destinoId")
-                .fetch()
-                .one();
+            Double distancia = conexaoRepository.findDistanceByOrigemAndDestino(origemId, destinoId);
 
-            if (result.isPresent()) {
-                return ((Number) result.get().get("distancia")).doubleValue();
-            }
+            return distancia != null ? distancia : 0.0;
+
         } catch (Exception e) {
             log.warn("Erro ao buscar distância entre cidades", e);
+            return 0.0;
         }
-        return 0.0;
     }
 
     /**
      * Busca o tempo entre duas cidades conectadas
      */
-    private Double buscarTempoConexao(Long origemId, Long destinoId) {
-        String cypher = "MATCH (origem:Cidade {id: $origemId})-[conn:CONECTA]->(destino:Cidade {id: $destinoId}) " +
-            "RETURN conn.tempo as tempo";
+    private Double buscarTempoConexao(
+            Long origemId,
+            Long destinoId) {
 
         try {
-            var result = neo4jClient.query(cypher)
-                .bind(origemId).to("origemId")
-                .bind(destinoId).to("destinoId")
-                .fetch()
-                .one();
+            Double tempo = conexaoRepository.findTimeByOrigemAndDestino(origemId, destinoId);
 
-            if (result.isPresent()) {
-                return ((Number) result.get().get("tempo")).doubleValue();
-            }
+            return tempo != null ? tempo : 0.0;
+
         } catch (Exception e) {
             log.warn("Erro ao buscar tempo entre cidades", e);
+            return 0.0;
         }
-        return 0.0;
     }
 }
-
-

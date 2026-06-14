@@ -29,29 +29,26 @@ public class ConexaoService {
     private CityRepository cityRepository;
 
     public List<ConexaoResponseDTO> findAll() {
-        log.info("Finding all conexoes");
         List<CityConnection> connections = conexaoRepository.findAllWithCities();
         List<ConexaoResponseDTO> response = new ArrayList<>();
-        
+
         for (CityConnection conn : connections) {
             response.add(mapToDTO(conn));
         }
-        
+
         return response;
     }
 
     public ConexaoResponseDTO findById(Long id) {
-        log.info("Finding conexao by id: {}", id);
         Optional<CityConnection> conexao = conexaoRepository.findById(id);
-        CityConnection conn = conexao.orElseThrow(() -> 
+
+        CityConnection conn = conexao.orElseThrow(() ->
             new ResourceNotFoundException("Conexão não encontrada com ID: " + id));
+
         return mapToDTO(conn);
     }
 
     public ConexaoResponseDTO create(ConexaoRequestDTO createConexaoDTO) {
-        log.info("Creating new conexao from city {} to city {}", 
-            createConexaoDTO.getCidadeOrigemId(), createConexaoDTO.getCidadeDestinoId());
-
         CityNode cidadeOrigem = cityRepository.findById(createConexaoDTO.getCidadeOrigemId())
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Cidade de origem não encontrada com ID: " + createConexaoDTO.getCidadeOrigemId()));
@@ -60,10 +57,9 @@ public class ConexaoService {
             .orElseThrow(() -> new ResourceNotFoundException(
                 "Cidade de destino não encontrada com ID: " + createConexaoDTO.getCidadeDestinoId()));
 
-        // Verificar se já existe conexão
         Optional<CityConnection> existingConnection = conexaoRepository.findByOrigemAndDestino(
             createConexaoDTO.getCidadeOrigemId(), createConexaoDTO.getCidadeDestinoId());
-        
+
         if (existingConnection.isPresent()) {
             throw new ResourceAlreadyExistsException(
                 "Já existe uma conexão entre essas cidades");
@@ -76,30 +72,24 @@ public class ConexaoService {
             conexao.setTempo(createConexaoDTO.getTempo());
             conexao.setCreatedAt(LocalDateTime.now());
 
-            // Adicionar a conexão à lista de conexões da cidade origem
             if (cidadeOrigem.getConnections() == null) {
                 cidadeOrigem.setConnections(new ArrayList<>());
             }
             cidadeOrigem.getConnections().add(conexao);
 
             cityRepository.save(cidadeOrigem);
-            
-            log.info("Conexao created successfully");
+
             return mapToDTO(conexao);
         } catch (DataIntegrityViolationException e) {
-            log.error("Error creating conexao", e);
             throw new DatabaseException("Erro ao criar conexão: " + e.getMessage());
         }
     }
 
     public void delete(Long id) {
-        log.info("Deleting conexao with id: {}", id);
         try {
             findById(id);
             conexaoRepository.deleteById(id);
-            log.info("Conexao deleted successfully with id: {}", id);
         } catch (DataIntegrityViolationException e) {
-            log.error("Error deleting conexao", e);
             throw new DatabaseException("Erro ao deletar conexão: " + e.getMessage());
         }
     }
@@ -117,4 +107,3 @@ public class ConexaoService {
         );
     }
 }
-

@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Node("Cidade")
+@Node("City")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -36,5 +36,6 @@ public class CityNode {
     @Relationship(type = "CONECTA", direction = Relationship.Direction.OUTGOING)
     private List<CityConnection> connections = new ArrayList<>();
 }
+
 
 
