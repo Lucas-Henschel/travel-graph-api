@@ -61,11 +61,8 @@ public class CustomFilter extends OncePerRequestFilter {
     
                 currentUserAuthentication.setCurrentUserEntity(currentUserEntityAuthentication);
                 SecurityContextHolder.getContext().setAuthentication(currentUserAuthentication);
-            } catch (JWTDecodeException | JWTCreationException | ResponseStatusException ex) {
+            } catch (JWTDecodeException | JWTCreationException | ResponseStatusException | ResourceNotFoundException ex) {
                 WriteErrorResponse.writeErrorResponse(response, request, HttpStatus.FORBIDDEN, ex, objectMapper);
-                return;
-            } catch (ResourceNotFoundException ex) {
-                WriteErrorResponse.writeErrorResponse(response, request, HttpStatus.NOT_FOUND, ex, objectMapper);
                 return;
             }
         }

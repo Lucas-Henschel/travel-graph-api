@@ -9,8 +9,8 @@ import com.travelGraph.entities.CityNode;
 import com.travelGraph.repositories.AttractionRepository;
 import com.travelGraph.repositories.CityRepository;
 import com.travelGraph.repositories.GraphQueryRepository;
+import com.travelGraph.services.exceptions.DatabaseException;
 import com.travelGraph.services.exceptions.ResourceNotFoundException;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -92,8 +92,10 @@ public class GraphQueryService {
                 routeSteps.size()
             );
 
+        } catch (ResourceNotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            throw new ResourceNotFoundException("Erro ao calcular caminho mais curto: " + e.getMessage());
+            throw new DatabaseException("Erro ao calcular caminho mais curto: " + e.getMessage());
         }
     }
 
@@ -125,7 +127,7 @@ public class GraphQueryService {
                 nearby.setTransportType((String) result.get("transport"));
                 nearbyLocations.add(nearby);
             }
-        } catch (Exception e) {
+        } catch (ResourceNotFoundException e) {
             throw new ResourceNotFoundException("Erro ao buscar locais próximos: " + e.getMessage());
         }
 
@@ -139,10 +141,12 @@ public class GraphQueryService {
         cityRepository.findById(cityId)
             .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada"));
 
+        Double radius = radiusKm != null ? radiusKm : 100.0;
+
         List<NearbyLocationDTO> nearbyAttractions = new ArrayList<>();
 
         try {
-            List<Map<String, Object>> results = graphQueryRepository.findNearbyAttractions(cityId);
+            List<Map<String, Object>> results = graphQueryRepository.findNearbyAttractions(cityId, radius);
 
             for (Map<String, Object> result : results) {
                 Map<String, Object> attractionNode = (Map<String, Object>) result.get("attraction");
@@ -151,11 +155,11 @@ public class GraphQueryService {
                 NearbyLocationDTO nearby = new NearbyLocationDTO();
                 nearby.setType("ATTRACTION");
                 nearby.setLocation(properties);
-                nearby.setDistanceKm(0.0);
+                nearby.setDistanceKm(((Number) result.get("distance")).doubleValue());
 
                 nearbyAttractions.add(nearby);
             }
-        } catch (Exception e) {
+        } catch (ResourceNotFoundException e) {
             throw new ResourceNotFoundException("Erro ao buscar atrações próximas: " + e.getMessage());
         }
 
@@ -235,7 +239,7 @@ public class GraphQueryService {
                 }
             }
 
-        } catch (Exception e) {
+        } catch (ResourceNotFoundException e) {
             throw new ResourceNotFoundException("Error finding recommended itinerary: " + e.getMessage());
         }
 

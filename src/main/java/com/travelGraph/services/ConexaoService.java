@@ -9,7 +9,6 @@ import com.travelGraph.repositories.ConexaoRepository;
 import com.travelGraph.services.exceptions.DatabaseException;
 import com.travelGraph.services.exceptions.ResourceAlreadyExistsException;
 import com.travelGraph.services.exceptions.ResourceNotFoundException;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -28,10 +28,10 @@ public class ConexaoService {
     private CityRepository cityRepository;
 
     public List<ConnectionResponseDTO> findAll() {
-        List<CityConnection> connections = conexaoRepository.findAllWithCities();
+        List<Map<String, Object>> connections = conexaoRepository.findAllConnectionsWithCityInfo();
         List<ConnectionResponseDTO> response = new ArrayList<>();
 
-        for (CityConnection conn : connections) {
+        for (Map<String, Object> conn : connections) {
             response.add(mapToDTO(conn));
         }
 
@@ -39,9 +39,8 @@ public class ConexaoService {
     }
 
     public ConnectionResponseDTO findById(Long id) {
-        Optional<CityConnection> conexao = conexaoRepository.findById(id);
-
-        CityConnection conn = conexao.orElseThrow(() -> new ResourceNotFoundException("Connection not found with ID: " + id));
+        Map<String, Object> conn = conexaoRepository.findConnectionWithCityInfoById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Connection not found with ID: " + id));
 
         return mapToDTO(conn);
     }
@@ -75,7 +74,16 @@ public class ConexaoService {
 
             cityRepository.save(originCity);
 
-            return mapToDTO(conexao);
+            return new ConnectionResponseDTO(
+                conexao.getId(),
+                originCity.getId(),
+                destinationCity.getId(),
+                originCity.getName(),
+                destinationCity.getName(),
+                conexao.getDistancia(),
+                conexao.getTempo(),
+                conexao.getCreatedAt()
+            );
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException("Error creating connection: " + e.getMessage());
         }
@@ -90,16 +98,16 @@ public class ConexaoService {
         }
     }
 
-    private ConnectionResponseDTO mapToDTO(CityConnection connection) {
+    private ConnectionResponseDTO mapToDTO(Map<String, Object> data) {
         return new ConnectionResponseDTO(
-            connection.getId(),
-            connection.getTargetCity() != null ? connection.getTargetCity().getId() : null,
-            connection.getTargetCity() != null ? connection.getTargetCity().getId() : null,
-            connection.getTargetCity() != null ? connection.getTargetCity().getName() : null,
-            connection.getTargetCity() != null ? connection.getTargetCity().getName() : null,
-            connection.getDistancia(),
-            connection.getTempo(),
-            connection.getCreatedAt()
+            ((Number) data.get("connectionId")).longValue(),
+            data.get("originCityId") != null ? ((Number) data.get("originCityId")).longValue() : null,
+            data.get("destinationCityId") != null ? ((Number) data.get("destinationCityId")).longValue() : null,
+            (String) data.get("originCityName"),
+            (String) data.get("destinationCityName"),
+            data.get("distance") != null ? ((Number) data.get("distance")).doubleValue() : null,
+            data.get("time") != null ? ((Number) data.get("time")).doubleValue() : null,
+            data.get("createdAt") != null ? (LocalDateTime) data.get("createdAt") : null
         );
     }
 }

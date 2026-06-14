@@ -43,14 +43,19 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
     );
 
     /**
-     * Atrações de uma cidade
+     * Atrações de uma cidade e cidades próximas dentro de um raio
      */
     @Query("""
         MATCH (city:City {id: $cityId})-[:HAS_ATTRACTION]->(attraction:Attraction)
-        RETURN attraction
+        RETURN attraction, 0.0 AS distance
+        UNION
+        MATCH (city:City {id: $cityId})-[conn:CONNECTS_TO]->(nearby:City)-[:HAS_ATTRACTION]->(attraction:Attraction)
+        WHERE conn.distanceKm <= $radius
+        RETURN attraction, conn.distanceKm AS distance
     """)
     List<Map<String, Object>> findNearbyAttractions(
-        @Param("cityId") Long cityId
+        @Param("cityId") Long cityId,
+        @Param("radius") Double radius
     );
 
     /**

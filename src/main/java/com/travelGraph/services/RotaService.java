@@ -4,6 +4,7 @@ import com.travelGraph.dto.attraction.AttractionResponseDTO;
 import com.travelGraph.dto.route.CityRouteDTO;
 import com.travelGraph.dto.route.TravelRouteDTO;
 import com.travelGraph.entities.AttractionNode;
+import com.travelGraph.entities.CityConnection;
 import com.travelGraph.entities.CityNode;
 import com.travelGraph.mapper.AttractionMapper;
 import com.travelGraph.repositories.AttractionRepository;
@@ -13,13 +14,13 @@ import com.travelGraph.repositories.GraphQueryRepository;
 import com.travelGraph.services.exceptions.DatabaseException;
 import com.travelGraph.services.exceptions.InvalidRouteException;
 import com.travelGraph.services.exceptions.ResourceNotFoundException;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -144,21 +145,14 @@ public class RotaService {
                 .map(AttractionMapper::toDTO)
                 .collect(Collectors.toList());
 
-            CityRouteDTO cityRouteDto = new CityRouteDTO();
-            cityRouteDto.setId(city.getId());
-            cityRouteDto.setName(city.getName());
-            cityRouteDto.setLatitude(city.getLatitude());
-            cityRouteDto.setLongitude(city.getLongitude());
-            cityRouteDto.setAttractions(attractionDTOs);
+            CityRouteDTO cityRouteDto = CityRouteDTO.fromCityNode(city, attractionDTOs);
 
             cities.add(cityRouteDto);
 
             if (i < caminhoIds.size() - 1) {
-                Double distance = buscarDistanciaConexao(cityId, caminhoIds.get(i + 1));
-                Double time = buscarTempoConexao(cityId, caminhoIds.get(i + 1));
-
-                if (distance != null) totalDistance += distance;
-                if (time != null) totalTime += time;
+                double[] conexaoInfo = buscarConexaoInfo(cityId, caminhoIds.get(i + 1));
+                totalDistance += conexaoInfo[0];
+                totalTime += conexaoInfo[1];
             }
         }
 
@@ -171,28 +165,21 @@ public class RotaService {
     }
 
     /**
-     * Busca a distância entre duas cidades conectadas
+     * Busca distância e tempo entre duas cidades conectadas em uma única consulta
      */
-    private Double buscarDistanciaConexao(Long origemId, Long destinoId) {
+    private double[] buscarConexaoInfo(Long origemId, Long destinoId) {
         try {
-            Double distancia = conexaoRepository.findDistanceByOrigemAndDestino(origemId, destinoId);
+            Optional<CityConnection> conexao = conexaoRepository.findByOrigemAndDestino(origemId, destinoId);
 
-            return distancia != null ? distancia : 0.0;
+            if (conexao.isPresent()) {
+                Double distancia = conexao.get().getDistancia() != null ? conexao.get().getDistancia() : 0.0;
+                Double tempo = conexao.get().getTempo() != null ? conexao.get().getTempo() : 0.0;
+                return new double[]{distancia, tempo};
+            }
+
+            return new double[]{0.0, 0.0};
         } catch (Exception e) {
-            throw new DatabaseException("Erro ao buscar distância entre cidades: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Busca o tempo entre duas cidades conectadas
-     */
-    private Double buscarTempoConexao(Long origemId, Long destinoId) {
-        try {
-            Double tempo = conexaoRepository.findTimeByOrigemAndDestino(origemId, destinoId);
-
-            return tempo != null ? tempo : 0.0;
-        } catch (Exception e) {
-            throw new DatabaseException("Erro ao buscar tempo entre cidades: " + e.getMessage());
+            throw new DatabaseException("Erro ao buscar informações da conexão: " + e.getMessage());
         }
     }
 }

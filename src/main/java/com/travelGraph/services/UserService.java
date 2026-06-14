@@ -47,7 +47,12 @@ public class UserService {
                 throw new DatabaseException("Usuário não pode deletar a si mesmo");
             }
 
-            findById(id);
+            Optional<UserNode> user = findById(id);
+
+            if (user.isEmpty()) {
+                throw new ResourceNotFoundException("Usuário não encontrado");
+            }
+
             userRepository.deleteById(id);
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException(e.getMessage());
@@ -61,9 +66,7 @@ public class UserService {
             throw new ResourceNotFoundException("Usuário não encontrado");
         }
 
-        if (updateUser.getPassword().isEmpty()) {
-            updateUser.setPassword(null);
-        } else {
+        if (updateUser.getPassword() != null) {
             String passwordEncryption = passwordEncoder.encode(updateUser.getPassword());
             updateUser.setPassword(passwordEncryption);
         }

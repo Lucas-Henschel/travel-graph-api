@@ -67,6 +67,8 @@ public class GraphController {
             graphQueryService.createCityConnection(connectionDTO);
         } else if ("ATTRACTION".equalsIgnoreCase(connectionDTO.getConnectionType())) {
             graphQueryService.createAttractionConnection(connectionDTO);
+        } else {
+            return ResponseEntity.badRequest().build();
         }
 
         return ResponseEntity.noContent().build();
