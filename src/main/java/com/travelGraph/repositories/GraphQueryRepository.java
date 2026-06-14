@@ -15,9 +15,9 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
      * Caminho mais curto entre duas cidades
      */
     @Query("""
-        MATCH path = shortestPath(
-            (source:City {id: $sourceId})-[*]-(target:City {id: $targetId})
-        )
+        MATCH (source:City), (target:City)
+        WHERE id(source) = $sourceId AND id(target) = $targetId
+        MATCH path = shortestPath((source)-[*]-(target))
         WITH nodes(path) AS nodes, relationships(path) AS rels
         RETURN nodes, rels
     """)
@@ -30,12 +30,11 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
      * Cidades próximas dentro de um raio
      */
     @Query("""
-        MATCH (source:City {id: $cityId})-[connection:CONNECTS_TO]->(target:City)
-        WHERE connection.distanceKm <= $radius
+        MATCH (source:City)-[connection:CONECTA]->(target:City)
+        WHERE id(source) = $cityId AND connection.distancia <= $radius
         RETURN target,
-           connection.distanceKm AS distance,
-           connection.durationMinutes AS duration,
-           connection.transportType AS transport
+           connection.distancia AS distance,
+           connection.tempo AS duration
     """)
     List<Map<String, Object>> findNearbyLocations(
         @Param("cityId") Long cityId,
@@ -46,12 +45,13 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
      * Atrações de uma cidade e cidades próximas dentro de um raio
      */
     @Query("""
-        MATCH (city:City {id: $cityId})-[:HAS_ATTRACTION]->(attraction:Attraction)
+        MATCH (attraction:Attraction)-[:PERTENCE_A]->(city:City)
+        WHERE id(city) = $cityId
         RETURN attraction, 0.0 AS distance
         UNION
-        MATCH (city:City {id: $cityId})-[conn:CONNECTS_TO]->(nearby:City)-[:HAS_ATTRACTION]->(attraction:Attraction)
-        WHERE conn.distanceKm <= $radius
-        RETURN attraction, conn.distanceKm AS distance
+        MATCH (city:City)-[conn:CONECTA]->(nearby:City)<-[:PERTENCE_A]-(attraction:Attraction)
+        WHERE id(city) = $cityId AND conn.distancia <= $radius
+        RETURN attraction, conn.distancia AS distance
     """)
     List<Map<String, Object>> findNearbyAttractions(
         @Param("cityId") Long cityId,
@@ -62,9 +62,9 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
      * Itinerário recomendado entre duas cidades
      */
     @Query("""
-        MATCH path = shortestPath(
-            (start:City {id: $startId})-[*..10]-(end:City {id: $endId})
-        )
+        MATCH (start:City), (end:City)
+        WHERE id(start) = $startId AND id(end) = $endId
+        MATCH path = shortestPath((start)-[*..10]-(end))
         RETURN nodes(path) AS nodes
     """)
     List<Map<String, Object>> findRecommendedItinerary(
@@ -78,7 +78,7 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
     @Query("""
         CALL gds.graph.project(
             $graphName,
-            'Cidade',
+            'City',
             'CONECTA',
             {
                 relationshipProperties: {

@@ -10,6 +10,6 @@ import java.util.List;
 
 @Repository
 public interface AttractionRepository extends Neo4jRepository<AttractionNode, Long> {
-    @Query("MATCH (a:Attraction)-[:PERTENCE_A]-(c:Cidade) WHERE c.id = $cityId RETURN a")
+    @Query("MATCH (a:Attraction)-[:PERTENCE_A]->(c:City) WHERE id(c) = $cityId RETURN a")
     List<AttractionNode> findByCityId(@Param("cityId") Long cityId);
 }
