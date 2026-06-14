@@ -1,5 +1,6 @@
 package com.travelGraph.services;
 
+import com.travelGraph.dto.connection.ConnectionProjection;
 import com.travelGraph.dto.connection.ConnectionRequestDTO;
 import com.travelGraph.dto.connection.ConnectionResponseDTO;
 import com.travelGraph.entities.CityConnection;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -28,21 +28,30 @@ public class ConexaoService {
     private CityRepository cityRepository;
 
     public List<ConnectionResponseDTO> findAll() {
-        List<Map<String, Object>> connections = conexaoRepository.findAllConnectionsWithCityInfo();
-        List<ConnectionResponseDTO> response = new ArrayList<>();
-
-        for (Map<String, Object> conn : connections) {
-            response.add(mapToDTO(conn));
-        }
-
-        return response;
+        return conexaoRepository.findAllConnectionsWithCityInfo()
+            .stream()
+            .map(this::toDTO)
+            .toList();
     }
 
     public ConnectionResponseDTO findById(Long id) {
-        Map<String, Object> conn = conexaoRepository.findConnectionWithCityInfoById(id)
+        ConnectionProjection projection = conexaoRepository.findConnectionWithCityInfoById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Connection not found with ID: " + id));
 
-        return mapToDTO(conn);
+        return toDTO(projection);
+    }
+
+    private ConnectionResponseDTO toDTO(ConnectionProjection p) {
+        return new ConnectionResponseDTO(
+            p.connectionId(),
+            p.originCityId(),
+            p.destinationCityId(),
+            p.originCityName(),
+            p.destinationCityName(),
+            p.distance(),
+            p.time(),
+            p.createdAt()
+        );
     }
 
     public ConnectionResponseDTO create(ConnectionRequestDTO createConnectionDTO) {
@@ -98,16 +107,4 @@ public class ConexaoService {
         }
     }
 
-    private ConnectionResponseDTO mapToDTO(Map<String, Object> data) {
-        return new ConnectionResponseDTO(
-            ((Number) data.get("connectionId")).longValue(),
-            data.get("originCityId") != null ? ((Number) data.get("originCityId")).longValue() : null,
-            data.get("destinationCityId") != null ? ((Number) data.get("destinationCityId")).longValue() : null,
-            (String) data.get("originCityName"),
-            (String) data.get("destinationCityName"),
-            data.get("distance") != null ? ((Number) data.get("distance")).doubleValue() : null,
-            data.get("time") != null ? ((Number) data.get("time")).doubleValue() : null,
-            data.get("createdAt") != null ? (LocalDateTime) data.get("createdAt") : null
-        );
-    }
 }
