@@ -4,22 +4,21 @@ import com.travelGraph.dto.attraction.AttractionResponseDTO;
 import com.travelGraph.entities.AttractionNode;
 
 public class AttractionMapper {
-
     public static AttractionResponseDTO toDTO(AttractionNode entity) {
         if (entity == null) {
             return null;
         }
 
         return new AttractionResponseDTO(
-                entity.getId(),
-                entity.getName(),
-                entity.getDescription(),
-                entity.getCategory(),
-                entity.getLatitude(),
-                entity.getLongitude(),
-                entity.getCreatedAt(),
-                entity.getUpdatedAt(),
-                entity.getCity() != null ? CityMapper.toDTO(entity.getCity()) : null
+            entity.getId(),
+            entity.getName(),
+            entity.getDescription(),
+            entity.getCategory(),
+            entity.getLatitude(),
+            entity.getLongitude(),
+            entity.getCreatedAt(),
+            entity.getUpdatedAt(),
+            entity.getCity() != null ? CityMapper.toDTO(entity.getCity()) : null
         );
     }
 
@@ -41,6 +40,7 @@ public class AttractionMapper {
         if (dto.getCity() != null) {
             entity.setCity(CityMapper.toEntity(dto.getCity()));
         }
+
         return entity;
     }
 }

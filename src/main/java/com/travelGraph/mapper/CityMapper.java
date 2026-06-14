@@ -8,6 +8,7 @@ public class CityMapper {
         if (entity == null) {
             return null;
         }
+
         return new CityResponseDTO(
             entity.getId(),
             entity.getName(),
@@ -22,6 +23,7 @@ public class CityMapper {
         if (dto == null) {
             return null;
         }
+
         CityNode entity = new CityNode();
         entity.setId(dto.getId());
         entity.setName(dto.getName());
@@ -29,6 +31,7 @@ public class CityMapper {
         entity.setLongitude(dto.getLongitude());
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setUpdatedAt(dto.getUpdatedAt());
+
         return entity;
     }
 }
