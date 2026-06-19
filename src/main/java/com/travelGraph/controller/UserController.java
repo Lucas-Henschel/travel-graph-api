@@ -25,7 +25,7 @@ import com.travelGraph.dto.auth.CurrentUserDTO;
 import com.travelGraph.dto.user.CreateUserRequestDTO;
 import com.travelGraph.dto.user.UpdateUserRequestDTO;
 import com.travelGraph.dto.user.UserResponseDTO;
-import com.travelGraph.entities.UserEntity;
+import com.travelGraph.entities.UserNode;
 import com.travelGraph.mapper.UserMapper;
 import com.travelGraph.services.UserService;
 
@@ -35,22 +35,28 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    /**
+     * Lista todos os usuários
+     */
     @GetMapping
     public ResponseEntity<List<UserResponseDTO>> findAll() {
-        List<UserEntity> userEntities = userService.findAll();
+        List<UserNode> userEntities = userService.findAll();
 
         List<UserResponseDTO> listUserResponse = new ArrayList<>();
 
-        for (UserEntity userEntity : userEntities) {
-            listUserResponse.add(UserMapper.toDTO(userEntity));
+        for (UserNode userNode : userEntities) {
+            listUserResponse.add(UserMapper.toDTO(userNode));
         }
 
         return ResponseEntity.ok().body(listUserResponse);
     }
 
+    /**
+     * Busca um usuário por ID
+     */
     @GetMapping(value = "/{id}")
     public ResponseEntity<UserResponseDTO> findById(@Valid @PathVariable String id) {
-        Optional<UserEntity> userEntity = userService.findById(id);
+        Optional<UserNode> userEntity = userService.findById(id);
 
         if (userEntity.isEmpty()) {
             throw new ResourceNotFoundException("Usuário não encontrado");
@@ -61,31 +67,40 @@ public class UserController {
         return ResponseEntity.ok().body(userResponse);
     }
 
+    /**
+     * Cria um novo usuário
+     */
+    @PostMapping
+    public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody CreateUserRequestDTO createUserRequestDTO) {
+        UserNode userNode = userService.create(createUserRequestDTO);
+
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+            .buildAndExpand(userNode.getId()).toUri();
+
+        UserResponseDTO userResponse = UserMapper.toDTO(userNode);
+
+        return ResponseEntity.created(uri).body(userResponse);
+    }
+
+    /**
+     * Atualiza um usuário existente
+     */
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<UserResponseDTO> update(@Valid @PathVariable String id, @Valid @RequestBody UpdateUserRequestDTO updateUser) {
+        UserNode userNode = userService.update(id, updateUser);
+        UserResponseDTO userResponse = UserMapper.toDTO(userNode);
+
+        return ResponseEntity.ok().body(userResponse);
+    }
+
+    /**
+     * Remove um usuário
+     */
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Void> delete(@Valid @PathVariable String id) {
         CurrentUserDTO currentUser = (CurrentUserDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         userService.delete(currentUser, id);
         return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping
-    public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody CreateUserRequestDTO createUserRequestDTO) {
-        UserEntity userEntity = userService.create(createUserRequestDTO);
-
-        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-           .buildAndExpand(userEntity.getId()).toUri();
-
-        UserResponseDTO userResponse = UserMapper.toDTO(userEntity);
-
-        return ResponseEntity.created(uri).body(userResponse);
-    }
-
-    @PutMapping(value = "/{id}")
-    public ResponseEntity<UserResponseDTO> update(@Valid @PathVariable String id, @Valid @RequestBody UpdateUserRequestDTO updateUser) {
-        UserEntity userEntity = userService.update(id, updateUser);
-        UserResponseDTO userResponse = UserMapper.toDTO(userEntity);
-
-        return ResponseEntity.ok().body(userResponse);
     }
 }

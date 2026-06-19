@@ -28,8 +28,11 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    /**
+     * Faz login do usuário e retorna token JWT
+     */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO data){
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO data) {
         Authentication authentication = authService.validLogin(data.getEmail(), data.getPassword());
 
         if (authentication != null && authentication.isAuthenticated()) {
@@ -42,6 +45,9 @@ public class AuthController {
         throw new UnprocessableEntityException("Credenciais inválidas");
     }
 
+    /**
+     * Faz logout do usuário
+     */
     @PostMapping("/logout")
     public ResponseEntity<Boolean> logout(HttpServletRequest request, HttpServletResponse response) {
         Boolean isLoggedOut = authService.logout(request, response);

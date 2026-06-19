@@ -6,7 +6,7 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.travelGraph.dto.auth.CurrentUserDTO;
-import com.travelGraph.entities.UserEntity;
+import com.travelGraph.entities.UserNode;
 import com.travelGraph.helpers.WriteErrorResponse;
 import com.travelGraph.services.UserService;
 import com.travelGraph.services.exceptions.ResourceNotFoundException;
@@ -47,7 +47,7 @@ public class CustomFilter extends OncePerRequestFilter {
         if (tokenHeader != null) {
             try {
                 String userId = tokenService.validateToken(tokenHeader);
-                Optional<UserEntity> userEntity = userService.findById(userId);
+                Optional<UserNode> userEntity = userService.findById(userId);
 
                 if (userEntity.isEmpty()) {
                     throw new ResourceNotFoundException("Credenciais de acesso inválidas");
@@ -61,11 +61,8 @@ public class CustomFilter extends OncePerRequestFilter {
     
                 currentUserAuthentication.setCurrentUserEntity(currentUserEntityAuthentication);
                 SecurityContextHolder.getContext().setAuthentication(currentUserAuthentication);
-            } catch (JWTDecodeException | JWTCreationException | ResponseStatusException ex) {
+            } catch (JWTDecodeException | JWTCreationException | ResponseStatusException | ResourceNotFoundException ex) {
                 WriteErrorResponse.writeErrorResponse(response, request, HttpStatus.FORBIDDEN, ex, objectMapper);
-                return;
-            } catch (ResourceNotFoundException ex) {
-                WriteErrorResponse.writeErrorResponse(response, request, HttpStatus.NOT_FOUND, ex, objectMapper);
                 return;
             }
         }
