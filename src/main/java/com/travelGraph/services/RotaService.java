@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -100,19 +99,19 @@ public class RotaService {
         String propriedadePeso
     ) {
         try {
-            Map<String, Object> data = graphQueryRepository.executeDijkstra(
+            List<Long> nodeIds = graphQueryRepository.executeDijkstra(
                 GRAPH_NAME,
                 origemId,
                 destinoId
             );
 
-            if (data == null) {
+            if (nodeIds == null) {
                 return new ArrayList<>();
             }
 
-            return (List<Long>) data.get("nodeIds");
+            return nodeIds;
         } catch (Exception e) {
-            throw new DatabaseException("Erro ao executar o dijistra: " + e.getMessage());
+            throw new DatabaseException("Erro ao executar o dijkstra: " + e.getMessage());
         }
     }
 

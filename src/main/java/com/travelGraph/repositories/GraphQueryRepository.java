@@ -89,10 +89,10 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
                 }
             }
         )
-        YIELD graphName, nodeCount, relationshipCount
-        RETURN graphName, nodeCount, relationshipCount
+        YIELD graphName
+        RETURN graphName
     """)
-    Map<String, Object> createGraph(@Param("graphName") String graphName, @Param("weight") String weight);
+    String createGraph(@Param("graphName") String graphName, @Param("weight") String weight);
 
     /**
      * Executa Dijkstra no grafo em memória
@@ -106,15 +106,15 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
                 relationshipWeightProperty: 'weight'
             }
         )
-        YIELD nodeIds, costs
-        RETURN nodeIds, costs
+        YIELD nodeIds
+        RETURN nodeIds
     """)
-    Map<String, Object> executeDijkstra(@Param("graphName") String graphName, @Param("origem") Long origem, @Param("destino") Long destino
+    List<Long> executeDijkstra(@Param("graphName") String graphName, @Param("origem") Long origem, @Param("destino") Long destino
     );
 
     /**
      * Remove o grafo em memória
      */
     @Query("CALL gds.graph.drop($graphName) YIELD graphName RETURN graphName")
-    Map<String, Object> dropGraph(@Param("graphName") String graphName);
+    String dropGraph(@Param("graphName") String graphName);
 }
