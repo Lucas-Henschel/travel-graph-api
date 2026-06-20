@@ -31,7 +31,7 @@ public class AttractionService {
 
     public AttractionNode findById(Long id) {
         Optional<AttractionNode> attraction = attractionRepository.findById(id);
-        return attraction.orElseThrow(() -> new ResourceNotFoundException("Ponto turístico não encontrado com ID: " + id));
+        return attraction.orElseThrow(() -> new ResourceNotFoundException("Ponto turístico não encontrado"));
     }
 
     public List<AttractionNode> findByCityId(Long cityId) {
@@ -40,7 +40,7 @@ public class AttractionService {
 
     public AttractionNode create(CreateAttractionRequestDTO createAttractionDTO) {
         CityNode city = cityRepository.findById(createAttractionDTO.getCityId())
-            .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada com ID: " + createAttractionDTO.getCityId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada"));
 
         try {
             AttractionNode attractionNode = new AttractionNode();

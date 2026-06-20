@@ -48,13 +48,13 @@ public class RotaService {
      */
     public TravelRouteDTO calcularRota(Long startCityId, Long endCityId, String criteria) {
         CityNode origem = cityRepository.findById(startCityId)
-            .orElseThrow(() -> new ResourceNotFoundException("Origin city not found: " + startCityId));
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade de origem não encontrada"));
 
         CityNode destino = cityRepository.findById(endCityId)
-            .orElseThrow(() -> new ResourceNotFoundException("Destination city not found: " + endCityId));
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade de destino não encontrada"));
 
         if (!criteria.equals("distance") && !criteria.equals("time")) {
-            throw new InvalidRouteException("Invalid criteria. Use 'distance' or 'time'");
+            throw new InvalidRouteException("Critério inválido. Use 'distance' ou 'time'");
         }
 
         String propriedadePeso = criteria.equals("distance") ? "distancia" : "tempo";
@@ -65,7 +65,9 @@ public class RotaService {
             List<Long> caminhoIds = executarDijkstra(startCityId, endCityId, propriedadePeso);
 
             if (caminhoIds.isEmpty()) {
-                throw new InvalidRouteException("No route found between the given cities");
+                throw new InvalidRouteException(
+                    "Nenhuma rota encontrada entre " + origem.getName() + " e " + destino.getName()
+                );
             }
 
             TravelRouteDTO roteiro = construirRoteiro(caminhoIds, propriedadePeso);

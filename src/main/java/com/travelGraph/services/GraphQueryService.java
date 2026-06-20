@@ -240,7 +240,7 @@ public class GraphQueryService {
             }
 
         } catch (ResourceNotFoundException e) {
-            throw new ResourceNotFoundException("Error finding recommended itinerary: " + e.getMessage());
+            throw new ResourceNotFoundException("Erro ao buscar itinerário recomendado: " + e.getMessage());
         }
 
         return itinerary;

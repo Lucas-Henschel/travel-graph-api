@@ -47,7 +47,7 @@ public class TokenService {
         } catch (TokenExpiredException | JWTCreationException exception) {
             throw new JWTCreationException("Sessão expirada", exception);
         } catch (JWTDecodeException exception) {
-            throw new JWTDecodeException("Token invalido", exception);
+            throw new JWTDecodeException("Token inválido", exception);
         }
     }
 
