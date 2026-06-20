@@ -144,7 +144,7 @@ public class ConexaoService {
                 );
             }
 
-            conexaoRepository.deleteById(id);
+            conexaoRepository.deleteConnectionById(id);
 
             CityConnection conexao = new CityConnection();
             conexao.setTargetCity(destinationCity);
@@ -178,7 +178,7 @@ public class ConexaoService {
     public void delete(Long id) {
         try {
             findById(id);
-            conexaoRepository.deleteById(id);
+            conexaoRepository.deleteConnectionById(id);
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException("Erro ao deletar conexão: " + e.getMessage());
         }

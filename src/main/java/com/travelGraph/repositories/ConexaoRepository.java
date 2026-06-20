@@ -27,4 +27,8 @@ public interface ConexaoRepository extends Neo4jRepository<CityConnection, Long>
     @Transactional
     @Query("MATCH ()-[conn:CONECTA]->() WHERE id(conn) = $id SET conn.distancia = $distance, conn.tempo = $time")
     void updateConnectionProperties(@Param("id") Long id, @Param("distance") Double distance, @Param("time") Double time);
+
+    @Transactional
+    @Query("MATCH ()-[conn:CONECTA]->() WHERE id(conn) = $id DELETE conn")
+    void deleteConnectionById(@Param("id") Long id);
 }
