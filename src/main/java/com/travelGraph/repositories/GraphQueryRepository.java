@@ -74,12 +74,13 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
 
     /**
      * Cria um grafo em memória para execução dos algoritmos GDS
+     * Trata CONECTA como bidirecional para permitir caminho em ambas direções
      */
     @Query("""
         CALL gds.graph.project(
             $graphName,
             'City',
-            'CONECTA',
+            {CONECTA: {orientation: 'UNDIRECTED'}},
             {
                 relationshipProperties: {
                     weight: {
@@ -89,7 +90,7 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
                 }
             }
         )
-        YIELD graphName
+        YIELD graphName, nodeCount, relationshipCount
         RETURN graphName
     """)
     String createGraph(@Param("graphName") String graphName, @Param("weight") String weight);
@@ -109,8 +110,7 @@ public interface GraphQueryRepository extends Neo4jRepository<CityNode, Long> {
         YIELD nodeIds
         RETURN nodeIds
     """)
-    List<Long> executeDijkstra(@Param("graphName") String graphName, @Param("origem") Long origem, @Param("destino") Long destino
-    );
+    List<Long> executeDijkstra(@Param("graphName") String graphName, @Param("origem") Long origem, @Param("destino") Long destino);
 
     /**
      * Remove o grafo em memória

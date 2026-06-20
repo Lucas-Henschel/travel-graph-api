@@ -70,9 +70,7 @@ public class RotaService {
                 );
             }
 
-            TravelRouteDTO roteiro = construirRoteiro(caminhoIds, propriedadePeso);
-
-            return roteiro;
+            return construirRoteiro(caminhoIds, propriedadePeso);
         } finally {
             deletarGrafo();
         }
@@ -127,6 +125,7 @@ public class RotaService {
             throw new DatabaseException("Erro ao deletar grafo (pode não existir): " + e.getMessage());
         }
     }
+
 
     /**
      * Constrói o DTO TravelRouteDTO com todas as informações
