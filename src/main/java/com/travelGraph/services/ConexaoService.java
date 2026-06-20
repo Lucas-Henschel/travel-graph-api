@@ -36,7 +36,7 @@ public class ConexaoService {
 
     public ConnectionResponseDTO findById(Long id) {
         ConnectionProjection projection = conexaoRepository.findConnectionWithCityInfoById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Connection not found with ID: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Conexão não encontrada"));
 
         return toDTO(projection);
     }
@@ -56,16 +56,18 @@ public class ConexaoService {
 
     public ConnectionResponseDTO create(ConnectionRequestDTO createConnectionDTO) {
         CityNode originCity = cityRepository.findById(createConnectionDTO.getOriginCityId())
-            .orElseThrow(() -> new ResourceNotFoundException("Origin city not found with ID: " + createConnectionDTO.getOriginCityId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade de origem não encontrada"));
 
         CityNode destinationCity = cityRepository.findById(createConnectionDTO.getDestinationCityId())
-            .orElseThrow(() -> new ResourceNotFoundException("Destination city not found with ID: " + createConnectionDTO.getDestinationCityId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade de destino não encontrada"));
 
         Optional<CityConnection> existingConnection = conexaoRepository.findByOrigemAndDestino(
             createConnectionDTO.getOriginCityId(), createConnectionDTO.getDestinationCityId());
 
         if (existingConnection.isPresent()) {
-            throw new ResourceAlreadyExistsException("A connection between these cities already exists");
+            throw new ResourceAlreadyExistsException(
+                "Já existe uma conexão entre " + originCity.getName() + " e " + destinationCity.getName()
+            );
         }
 
         try {
@@ -94,7 +96,82 @@ public class ConexaoService {
                 conexao.getCreatedAt()
             );
         } catch (DataIntegrityViolationException e) {
-            throw new DatabaseException("Error creating connection: " + e.getMessage());
+            throw new DatabaseException("Erro ao criar conexão: " + e.getMessage());
+        }
+    }
+
+    public ConnectionResponseDTO update(Long id, ConnectionRequestDTO updateConnectionDTO) {
+        ConnectionProjection existing = conexaoRepository.findConnectionWithCityInfoById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Conexão não encontrada"));
+
+        CityNode originCity = cityRepository.findById(updateConnectionDTO.getOriginCityId())
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade de origem não encontrada"));
+
+        CityNode destinationCity = cityRepository.findById(updateConnectionDTO.getDestinationCityId())
+            .orElseThrow(() -> new ResourceNotFoundException("Cidade de destino não encontrada"));
+
+        boolean endpointsChanged = !existing.originCityId().equals(updateConnectionDTO.getOriginCityId())
+            || !existing.destinationCityId().equals(updateConnectionDTO.getDestinationCityId());
+
+        if (endpointsChanged) {
+            Optional<CityConnection> duplicate = conexaoRepository.findByOrigemAndDestino(
+                updateConnectionDTO.getOriginCityId(), updateConnectionDTO.getDestinationCityId());
+
+            if (duplicate.isPresent() && !duplicate.get().getId().equals(id)) {
+                throw new ResourceAlreadyExistsException(
+                    "Já existe uma conexão entre " + originCity.getName() + " e " + destinationCity.getName()
+                );
+            }
+        }
+
+        try {
+            if (!endpointsChanged) {
+                conexaoRepository.updateConnectionProperties(
+                    id,
+                    updateConnectionDTO.getDistance(),
+                    updateConnectionDTO.getTime()
+                );
+
+                return new ConnectionResponseDTO(
+                    id,
+                    originCity.getId(),
+                    destinationCity.getId(),
+                    originCity.getName(),
+                    destinationCity.getName(),
+                    updateConnectionDTO.getDistance(),
+                    updateConnectionDTO.getTime(),
+                    existing.createdAt()
+                );
+            }
+
+            conexaoRepository.deleteById(id);
+
+            CityConnection conexao = new CityConnection();
+            conexao.setTargetCity(destinationCity);
+            conexao.setDistancia(updateConnectionDTO.getDistance());
+            conexao.setTempo(updateConnectionDTO.getTime());
+            conexao.setCreatedAt(existing.createdAt());
+
+            if (originCity.getConnections() == null) {
+                originCity.setConnections(new ArrayList<>());
+            }
+
+            originCity.getConnections().add(conexao);
+
+            cityRepository.save(originCity);
+
+            return new ConnectionResponseDTO(
+                conexao.getId(),
+                originCity.getId(),
+                destinationCity.getId(),
+                originCity.getName(),
+                destinationCity.getName(),
+                conexao.getDistancia(),
+                conexao.getTempo(),
+                conexao.getCreatedAt()
+            );
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Erro ao atualizar conexão: " + e.getMessage());
         }
     }
 
@@ -103,7 +180,7 @@ public class ConexaoService {
             findById(id);
             conexaoRepository.deleteById(id);
         } catch (DataIntegrityViolationException e) {
-            throw new DatabaseException("Error deleting connection: " + e.getMessage());
+            throw new DatabaseException("Erro ao deletar conexão: " + e.getMessage());
         }
     }
 

@@ -50,6 +50,18 @@ public class ConexaoController {
     }
 
     /**
+     * Atualiza uma conexão existente
+     */
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<ConnectionResponseDTO> update(
+        @PathVariable Long id,
+        @Valid @RequestBody ConnectionRequestDTO updateConnectionDTO
+    ) {
+        ConnectionResponseDTO response = conexaoService.update(id, updateConnectionDTO);
+        return ResponseEntity.ok().body(response);
+    }
+
+    /**
      * Remove uma conexão
      */
     @DeleteMapping(value = "/{id}")
