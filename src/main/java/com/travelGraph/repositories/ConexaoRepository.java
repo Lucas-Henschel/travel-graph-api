@@ -31,4 +31,15 @@ public interface ConexaoRepository extends Neo4jRepository<CityConnection, Long>
     @Transactional
     @Query("MATCH ()-[conn:CONECTA]->() WHERE id(conn) = $id DELETE conn")
     void deleteConnectionById(@Param("id") Long id);
+
+    @Transactional
+    @Query("MATCH (origem:City), (destino:City) " +
+           "WHERE id(origem) = $origemId AND id(destino) = $destinoId " +
+           "CREATE (origem)-[conn:CONECTA {distancia: $distance, tempo: $time, createdAt: $createdAt}]->(destino) " +
+           "RETURN id(conn)")
+    Long createConnection(@Param("origemId") Long origemId,
+                          @Param("destinoId") Long destinoId,
+                          @Param("distance") Double distance,
+                          @Param("time") Double time,
+                          @Param("createdAt") java.time.LocalDateTime createdAt);
 }

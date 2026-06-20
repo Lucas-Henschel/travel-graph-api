@@ -4,10 +4,9 @@ import com.travelGraph.dto.connection.CreateConnectionRequestDTO;
 import com.travelGraph.dto.route.NearbyLocationDTO;
 import com.travelGraph.dto.route.RouteStepDTO;
 import com.travelGraph.dto.route.ShortestPathResponseDTO;
-import com.travelGraph.entities.CityConnection;
-import com.travelGraph.entities.CityNode;
 import com.travelGraph.repositories.AttractionRepository;
 import com.travelGraph.repositories.CityRepository;
+import com.travelGraph.repositories.ConexaoRepository;
 import com.travelGraph.repositories.GraphQueryRepository;
 import com.travelGraph.services.exceptions.DatabaseException;
 import com.travelGraph.services.exceptions.ResourceNotFoundException;
@@ -30,6 +29,9 @@ public class GraphQueryService {
 
     @Autowired
     private GraphQueryRepository graphQueryRepository;
+
+    @Autowired
+    private ConexaoRepository conexaoRepository;
 
     /**
      * Calcula o caminho mais curto entre duas cidades
@@ -170,25 +172,24 @@ public class GraphQueryService {
      * Criar conexão entre cidades
      */
     public void createCityConnection(CreateConnectionRequestDTO connectionDTO) {
-        CityNode sourceCity = cityRepository.findById(connectionDTO.getSourceId()).orElseThrow(() -> new ResourceNotFoundException("Cidade origem não encontrada"));
-        CityNode targetCity = cityRepository.findById(connectionDTO.getTargetId()).orElseThrow(() -> new ResourceNotFoundException("Cidade destino não encontrada"));
-
-        CityConnection connection = new CityConnection();
-        connection.setTargetCity(targetCity);
-        connection.setDistancia(connectionDTO.getDistanceKm());
-        connection.setTempo(connectionDTO.getDurationMinutes() != null
-            ? connectionDTO.getDurationMinutes().doubleValue() / 60.0
-            : 0.0
-        );
-        connection.setCreatedAt(LocalDateTime.now());
-
-        if (sourceCity.getConnections() == null) {
-            sourceCity.setConnections(new ArrayList<>());
+        if (!cityRepository.existsById(connectionDTO.getSourceId())) {
+            throw new ResourceNotFoundException("Cidade origem não encontrada");
+        }
+        if (!cityRepository.existsById(connectionDTO.getTargetId())) {
+            throw new ResourceNotFoundException("Cidade destino não encontrada");
         }
 
-        sourceCity.getConnections().add(connection);
+        Double tempo = connectionDTO.getDurationMinutes() != null
+            ? connectionDTO.getDurationMinutes().doubleValue() / 60.0
+            : 0.0;
 
-        cityRepository.save(sourceCity);
+        conexaoRepository.createConnection(
+            connectionDTO.getSourceId(),
+            connectionDTO.getTargetId(),
+            connectionDTO.getDistanceKm(),
+            tempo,
+            LocalDateTime.now()
+        );
     }
 
     /**

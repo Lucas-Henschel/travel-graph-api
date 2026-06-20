@@ -51,7 +51,7 @@ public class CityService {
     }
 
     public CityNode update(Long id, UpdateCityRequestDTO updateCityDTO) {
-        CityNode cityNode = findById(id);
+        findById(id);
 
         Optional<CityNode> existingCity = cityRepository.findByName(updateCityDTO.getName());
         if (existingCity.isPresent() && !existingCity.get().getId().equals(id)) {
@@ -59,13 +59,13 @@ public class CityService {
         }
 
         try {
-            cityNode.setName(updateCityDTO.getName());
-            cityNode.setLatitude(updateCityDTO.getLatitude());
-            cityNode.setLongitude(updateCityDTO.getLongitude());
-            cityNode.setUpdatedAt(LocalDateTime.now());
-
-            CityNode updatedCity = cityRepository.save(cityNode);
-            return updatedCity;
+            return cityRepository.updateProperties(
+                id,
+                updateCityDTO.getName(),
+                updateCityDTO.getLatitude(),
+                updateCityDTO.getLongitude(),
+                LocalDateTime.now()
+            );
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException("Erro ao atualizar cidade: " + e.getMessage());
         }

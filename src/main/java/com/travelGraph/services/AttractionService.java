@@ -3,7 +3,6 @@ package com.travelGraph.services;
 import com.travelGraph.dto.attraction.CreateAttractionRequestDTO;
 import com.travelGraph.dto.attraction.UpdateAttractionRequestDTO;
 import com.travelGraph.entities.AttractionNode;
-import com.travelGraph.entities.CityNode;
 import com.travelGraph.repositories.AttractionRepository;
 import com.travelGraph.repositories.CityRepository;
 import com.travelGraph.services.exceptions.DatabaseException;
@@ -39,8 +38,9 @@ public class AttractionService {
     }
 
     public AttractionNode create(CreateAttractionRequestDTO createAttractionDTO) {
-        CityNode city = cityRepository.findById(createAttractionDTO.getCityId())
-            .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada"));
+        if (!cityRepository.existsById(createAttractionDTO.getCityId())) {
+            throw new ResourceNotFoundException("Cidade não encontrada");
+        }
 
         try {
             AttractionNode attractionNode = new AttractionNode();
@@ -49,29 +49,32 @@ public class AttractionService {
             attractionNode.setCategory(createAttractionDTO.getCategory());
             attractionNode.setLatitude(createAttractionDTO.getLatitude());
             attractionNode.setLongitude(createAttractionDTO.getLongitude());
-            attractionNode.setCity(city);
             attractionNode.setCreatedAt(LocalDateTime.now());
 
             AttractionNode savedAttraction = attractionRepository.save(attractionNode);
-            return savedAttraction;
+            attractionRepository.linkToCity(savedAttraction.getId(), createAttractionDTO.getCityId());
+            return attractionRepository.findById(savedAttraction.getId()).orElse(savedAttraction);
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException("Erro ao criar ponto turístico: " + e.getMessage());
         }
     }
 
     public AttractionNode update(Long id, UpdateAttractionRequestDTO updateAttractionDTO) {
-        AttractionNode attractionNode = findById(id);
+        findById(id);
 
         try {
-            attractionNode.setName(updateAttractionDTO.getName());
-            attractionNode.setDescription(updateAttractionDTO.getDescription());
-            attractionNode.setCategory(updateAttractionDTO.getCategory());
-            attractionNode.setLatitude(updateAttractionDTO.getLatitude());
-            attractionNode.setLongitude(updateAttractionDTO.getLongitude());
-            attractionNode.setUpdatedAt(LocalDateTime.now());
-
-            AttractionNode updatedAttraction = attractionRepository.save(attractionNode);
-            return updatedAttraction;
+            attractionRepository.updateProperties(
+                id,
+                updateAttractionDTO.getName(),
+                updateAttractionDTO.getDescription(),
+                updateAttractionDTO.getCategory(),
+                updateAttractionDTO.getLatitude(),
+                updateAttractionDTO.getLongitude(),
+                LocalDateTime.now()
+            );
+            return attractionRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("Ponto turístico não encontrado")
+            );
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException("Erro ao atualizar ponto turístico: " + e.getMessage());
         }

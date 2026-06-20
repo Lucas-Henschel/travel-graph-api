@@ -15,7 +15,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,29 +70,24 @@ public class ConexaoService {
         }
 
         try {
-            CityConnection conexao = new CityConnection();
-            conexao.setTargetCity(destinationCity);
-            conexao.setDistancia(createConnectionDTO.getDistance());
-            conexao.setTempo(createConnectionDTO.getTime());
-            conexao.setCreatedAt(LocalDateTime.now());
-
-            if (originCity.getConnections() == null) {
-                originCity.setConnections(new ArrayList<>());
-            }
-
-            originCity.getConnections().add(conexao);
-
-            cityRepository.save(originCity);
+            LocalDateTime createdAt = LocalDateTime.now();
+            Long connectionId = conexaoRepository.createConnection(
+                originCity.getId(),
+                destinationCity.getId(),
+                createConnectionDTO.getDistance(),
+                createConnectionDTO.getTime(),
+                createdAt
+            );
 
             return new ConnectionResponseDTO(
-                conexao.getId(),
+                connectionId,
                 originCity.getId(),
                 destinationCity.getId(),
                 originCity.getName(),
                 destinationCity.getName(),
-                conexao.getDistancia(),
-                conexao.getTempo(),
-                conexao.getCreatedAt()
+                createConnectionDTO.getDistance(),
+                createConnectionDTO.getTime(),
+                createdAt
             );
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException("Erro ao criar conexão: " + e.getMessage());
@@ -146,29 +140,23 @@ public class ConexaoService {
 
             conexaoRepository.deleteConnectionById(id);
 
-            CityConnection conexao = new CityConnection();
-            conexao.setTargetCity(destinationCity);
-            conexao.setDistancia(updateConnectionDTO.getDistance());
-            conexao.setTempo(updateConnectionDTO.getTime());
-            conexao.setCreatedAt(existing.createdAt());
-
-            if (originCity.getConnections() == null) {
-                originCity.setConnections(new ArrayList<>());
-            }
-
-            originCity.getConnections().add(conexao);
-
-            cityRepository.save(originCity);
+            Long newConnectionId = conexaoRepository.createConnection(
+                originCity.getId(),
+                destinationCity.getId(),
+                updateConnectionDTO.getDistance(),
+                updateConnectionDTO.getTime(),
+                existing.createdAt()
+            );
 
             return new ConnectionResponseDTO(
-                conexao.getId(),
+                newConnectionId,
                 originCity.getId(),
                 destinationCity.getId(),
                 originCity.getName(),
                 destinationCity.getName(),
-                conexao.getDistancia(),
-                conexao.getTempo(),
-                conexao.getCreatedAt()
+                updateConnectionDTO.getDistance(),
+                updateConnectionDTO.getTime(),
+                existing.createdAt()
             );
         } catch (DataIntegrityViolationException e) {
             throw new DatabaseException("Erro ao atualizar conexão: " + e.getMessage());
