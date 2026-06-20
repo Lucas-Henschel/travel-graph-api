@@ -257,8 +257,6 @@ CREATE (b)-[:CONECTA {distancia: dist, tempo: round((dist / 80.0) * 100) / 100.0
 
 // -----------------------------------------------------------------------------
 // 4. Usuários de teste
-//    Senha em texto plano para TODOS os usuários abaixo: "senha1234"
-//    (hash BCrypt cost 10 já calculado)
 // -----------------------------------------------------------------------------
 UNWIND [
   {name: 'Lucas Henschel',  email: 'lucas@travelgraph.com'},
@@ -271,7 +269,7 @@ CREATE (u:User {
   id:        randomUUID(),
   name:      row.name,
   email:     row.email,
-  password:  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password:  '$2a$10$BepXMRb9XOPssRqRf6czveO/OwSEC33H.DkhH5ZDy6mMyNeYiJTXO',
   createdAt: localdatetime()
 });
 
