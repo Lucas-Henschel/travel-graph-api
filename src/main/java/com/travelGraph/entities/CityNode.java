@@ -1,38 +1,38 @@
 package com.travelGraph.entities;
 
-import java.time.LocalDateTime;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.Relationship;
 
-@Node("user")
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Node("City")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserEntity {
+public class CityNode {
     @Id
     @GeneratedValue
     private Long id;
 
-    @NotBlank(message = "O nome não pode estar vazio")
-    @Size(max = 45, message = "O nome pode ter no máximo 45 caracteres")
+    @NotBlank(message = "O nome da cidade não pode estar vazio")
+    @Size(max = 100, message = "O nome pode ter no máximo 100 caracteres")
     private String name;
 
-    @NotBlank(message = "O e-mail não pode estar vazio")
-    @Size(max = 45, message = "O e-mail pode ter no máximo 45 caracteres")
-    private String email;
-
-    @NotBlank(message = "A senha é obrigatória")
-    @Size(min = 8, message = "A senha deve ter no mínimo 8 caracteres")
-    private String password;
+    private Double latitude;
+    private Double longitude;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
+
+    @Relationship(type = "CONECTA", direction = Relationship.Direction.OUTGOING)
+    private List<CityConnection> connections = new ArrayList<>();
 }

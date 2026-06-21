@@ -1,7 +1,7 @@
 package com.travelGraph.authConfig;
 
 import com.travelGraph.dto.auth.CurrentUserDTO;
-import com.travelGraph.entities.UserEntity;
+import com.travelGraph.entities.UserNode;
 import com.travelGraph.services.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         String login = authentication.getName();
         String password = (String) authentication.getCredentials();
 
-        Optional<UserEntity> userEntity = userService.findByEmail(login);
+        Optional<UserNode> userEntity = userService.findByEmail(login);
 
         if (userEntity.isPresent()){
             boolean isPasswordValid = passwordEncoder.matches(password, userEntity.get().getPassword());

@@ -3,6 +3,8 @@ package com.travelGraph.controller.exceptions;
 import com.auth0.jwt.exceptions.JWTCreationException;
 
 import com.travelGraph.services.exceptions.DatabaseException;
+import com.travelGraph.services.exceptions.InvalidRouteException;
+import com.travelGraph.services.exceptions.ResourceAlreadyExistsException;
 import com.travelGraph.services.exceptions.ResourceNotFoundException;
 import com.travelGraph.services.exceptions.UnprocessableEntityException;
 
@@ -35,6 +37,16 @@ public class ResourceExceptionHandler {
     public ResponseEntity<StandardError> databaseException(DatabaseException e, HttpServletRequest request) {
         List<String> errors = new ArrayList<>();
         errors.add("Database error");
+
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        StandardError err = new StandardError(Instant.now(), status.value(), errors, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    public ResponseEntity<StandardError> resourceAlreadyExistsException(ResourceAlreadyExistsException e, HttpServletRequest request) {
+        List<String> errors = new ArrayList<>();
+        errors.add("Resource Already Exists");
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
         StandardError err = new StandardError(Instant.now(), status.value(), errors, e.getMessage(), request.getRequestURI());
@@ -108,6 +120,26 @@ public class ResourceExceptionHandler {
         errors.add(e.getMessage());
 
         HttpStatus status = HttpStatus.FORBIDDEN;
+        StandardError err = new StandardError(Instant.now(), status.value(), errors, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(InvalidRouteException.class)
+    public ResponseEntity<StandardError> handleInvalidRouteException(InvalidRouteException e, HttpServletRequest request) {
+        List<String> errors = new ArrayList<>();
+        errors.add(e.getMessage());
+
+        HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+        StandardError err = new StandardError(Instant.now(), status.value(), errors, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<StandardError> handleGenericException(Exception e, HttpServletRequest request) {
+        List<String> errors = new ArrayList<>();
+        errors.add("Erro interno do servidor");
+
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         StandardError err = new StandardError(Instant.now(), status.value(), errors, e.getMessage(), request.getRequestURI());
         return ResponseEntity.status(status).body(err);
     }

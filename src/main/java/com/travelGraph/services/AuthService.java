@@ -2,7 +2,7 @@ package com.travelGraph.services;
 
 import com.travelGraph.authConfig.CurrentUserAuthentication;
 import com.travelGraph.dto.auth.CurrentUserDTO;
-import com.travelGraph.entities.UserEntity;
+import com.travelGraph.entities.UserNode;
 import com.travelGraph.services.exceptions.ResourceNotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +29,7 @@ public class AuthService {
     private CurrentUserAuthentication currentUserAuthentication;
 
     public Authentication validLogin(String email, String password) {
-        Optional<UserEntity> userEntity = userService.findByEmail(email);
+        Optional<UserNode> userEntity = userService.findByEmail(email);
 
         if (userEntity.isPresent()) {
             boolean isPasswordValid = passwordEncoder.matches(password, userEntity.get().getPassword());

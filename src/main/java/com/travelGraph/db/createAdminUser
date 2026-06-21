@@ -1,0 +1,8 @@
+CREATE (u:User {
+    id: "34e9ed28-8147-43bc-97e8-efc369133340",
+    name: "Admin TravelGraph",
+    email: "admin@travelgraph.com",
+    password: "$2a$10$BepXMRb9XOPssRqRf6czveO/OwSEC33H.DkhH5ZDy6mMyNeYiJTXO",
+    createdAt: localdatetime("2026-06-07T18:11:13.168474")
+})
+RETURN u;
